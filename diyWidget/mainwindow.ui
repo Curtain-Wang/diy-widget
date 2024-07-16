@@ -17,8 +17,8 @@
    <widget class="TNewBattery" name="widget_5" native="true">
     <property name="geometry">
      <rect>
-      <x>210</x>
-      <y>110</y>
+      <x>160</x>
+      <y>50</y>
       <width>151</width>
       <height>271</height>
      </rect>

@@ -5,7 +5,7 @@
 #include <QLinearGradient>
 
 TNewBattery::TNewBattery(QWidget *parent)
-    : QWidget(parent), m_chargeLevel(70),m_batteryWidth(150), m_batteryHeight(80) { // 初始化电量为50%
+    : QWidget(parent), m_chargeLevel(10),m_batteryWidth(150), m_batteryHeight(80), m_warningLevel(20) { // 初始化电量为50%
     setMinimumSize(200, 140); // 增加最小宽度
 }
 int TNewBattery::batteryWidth() const {
@@ -39,6 +39,18 @@ void TNewBattery::setChargeLevel(int level) {
     if (level != m_chargeLevel) {
         m_chargeLevel = level;
         emit chargeLevelChanged(level);
+        update();
+    }
+}
+
+int TNewBattery::warningLevel() const {
+    return m_warningLevel;
+}
+
+void TNewBattery::setWarningLevel(int level) {
+    if (level != m_warningLevel) {
+        m_warningLevel = level;
+        emit warningLevelChanged(level);
         update();
     }
 }
@@ -93,11 +105,18 @@ void TNewBattery::drawBase(QPainter &painter, const QRect &blueRect, int borderS
     painter.drawPolygon(lowerPoints, 6);
 }
 
+
 void TNewBattery::drawChargeLevel(QPainter &painter, const QRect &batteryRect) {
     // 电池充电百分比
     int chargeHeight = static_cast<int>((batteryRect.height() - 2) * (m_chargeLevel / 100.0));
     QRect chargeRect(batteryRect.left() + 1, batteryRect.bottom() - chargeHeight, batteryRect.width() - 2, chargeHeight);
-    painter.setBrush(Qt::green);
+
+    // 根据电量选择颜色
+    if (m_chargeLevel < m_warningLevel) {
+        painter.setBrush(Qt::yellow); // 电量低于警戒电量时显示黄色
+    } else {
+        painter.setBrush(Qt::green); // 电量正常时显示绿色
+    }
     painter.drawRect(chargeRect);
 
     // 显示电量百分比
@@ -110,6 +129,7 @@ void TNewBattery::drawChargeLevel(QPainter &painter, const QRect &batteryRect) {
                      batteryRect.top() + (batteryRect.height() + textHeight) / 2 - fm.descent(),
                      chargeText);
 }
+
 
 void TNewBattery::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
