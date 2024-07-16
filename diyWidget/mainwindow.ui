@@ -13,54 +13,19 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <widget class="TNewBattery" name="widget_5" native="true">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>50</y>
-      <width>151</width>
-      <height>271</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="TScale" name="widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>70</x>
-      <y>50</y>
-      <width>120</width>
-      <height>80</height>
-     </rect>
-    </property>
-   </widget>
-  </widget>
+  <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>17</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>TNewBattery</class>
-   <extends>QWidget</extends>
-   <header>tnewbattery.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>TScale</class>
-   <extends>QWidget</extends>
-   <header>tscale.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

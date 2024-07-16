@@ -1,20 +1,20 @@
-#include "tnewbattery.h"
+#include "tpnewbattery.h"
 #include <QPainter>
 #include <QFontMetrics>
 #include <QBrush>
 #include <QLinearGradient>
 #include <QPropertyAnimation>
 
-TNewBattery::TNewBattery(QWidget *parent)
+TPNewBattery::TPNewBattery(QWidget *parent)
     : QWidget(parent), m_chargeLevel(10), m_warningLevel(20) { // 初始化电量为10%
     setMinimumSize(200, 140); // 增加最小宽度
 }
 
-int TNewBattery::chargeLevel() const {
+int TPNewBattery::chargeLevel() const {
     return m_chargeLevel;
 }
 
-void TNewBattery::setChargeLevel(int level) {
+void TPNewBattery::setChargeLevel(int level) {
     if (level != m_chargeLevel) {
         m_chargeLevel = level;
         emit chargeLevelChanged(level);
@@ -22,11 +22,11 @@ void TNewBattery::setChargeLevel(int level) {
     }
 }
 
-int TNewBattery::warningLevel() const {
+int TPNewBattery::warningLevel() const {
     return m_warningLevel;
 }
 
-void TNewBattery::setWarningLevel(int level) {
+void TPNewBattery::setWarningLevel(int level) {
     if (level != m_warningLevel) {
         m_warningLevel = level;
         emit warningLevelChanged(level);
@@ -34,7 +34,7 @@ void TNewBattery::setWarningLevel(int level) {
     }
 }
 
-void TNewBattery::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
+void TPNewBattery::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     // 深蓝色长方形
     painter.setBrush(Qt::darkBlue);
     painter.drawRect(blueRect);
@@ -47,7 +47,7 @@ void TNewBattery::drawBatteryBody(QPainter &painter, const QRect &batteryRect, c
     painter.drawRect(batteryRect);
 }
 
-void TNewBattery::drawElectrodes(QPainter &painter, const QRect &batteryRect) {
+void TPNewBattery::drawElectrodes(QPainter &painter, const QRect &batteryRect) {
     int electrodeWidth = batteryRect.width() / 10;
     int electrodeHeight = batteryRect.height() / 5; // 电极高度为电池高度的1/5
     int extension = electrodeWidth; // 向上延伸一个电极宽度
@@ -58,7 +58,7 @@ void TNewBattery::drawElectrodes(QPainter &painter, const QRect &batteryRect) {
     painter.drawRect(rightElectrode);
 }
 
-void TNewBattery::drawTrapezoid(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
+void TPNewBattery::drawTrapezoid(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
     // 上部灰色梯形（上小下大）
     QPointF upperPoints[4] = {
         QPointF(blueRect.left() - borderSize / 2, blueRect.top() - trapezoidHeight), // 左上
@@ -70,7 +70,7 @@ void TNewBattery::drawTrapezoid(QPainter &painter, const QRect &blueRect, int bo
     painter.drawPolygon(upperPoints, 4);
 }
 
-void TNewBattery::drawBase(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
+void TPNewBattery::drawBase(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
     // 灰色底座
     QPointF lowerPoints[6] = {
         QPointF(blueRect.left(), blueRect.bottom()), // 左上
@@ -84,7 +84,7 @@ void TNewBattery::drawBase(QPainter &painter, const QRect &blueRect, int borderS
     painter.drawPolygon(lowerPoints, 6);
 }
 
-void TNewBattery::drawChargeLevel(QPainter &painter, const QRect &batteryRect) {
+void TPNewBattery::drawChargeLevel(QPainter &painter, const QRect &batteryRect) {
     // 电池充电百分比
     int chargeHeight = static_cast<int>((batteryRect.height() - 2) * (m_chargeLevel / 100.0));
     QRect chargeRect(batteryRect.left() + 1, batteryRect.bottom() - chargeHeight, batteryRect.width() - 2, chargeHeight);
@@ -108,7 +108,7 @@ void TNewBattery::drawChargeLevel(QPainter &painter, const QRect &batteryRect) {
                      chargeText);
 }
 
-void TNewBattery::paintEvent(QPaintEvent *event) {
+void TPNewBattery::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
 
     QPainter painter(this);

@@ -1,9 +1,9 @@
-#ifndef TNEWBATTERY_H
-#define TNEWBATTERY_H
-
+#ifndef TPNEWBATTERY_H
+#define TPNEWBATTERY_H
+#include <QtUiPlugin/QDesignerExportWidget>
 #include <QWidget>
 
-class TNewBattery : public QWidget
+class QDESIGNER_WIDGET_EXPORT TPNewBattery : public QWidget
 {
     Q_OBJECT
 
@@ -11,7 +11,7 @@ class TNewBattery : public QWidget
     Q_PROPERTY(int chargeLevel READ chargeLevel WRITE setChargeLevel NOTIFY chargeLevelChanged)
 
 public:
-    explicit TNewBattery(QWidget *parent = nullptr);
+    explicit TPNewBattery(QWidget *parent = nullptr);
 
     int chargeLevel() const;
     void setChargeLevel(int level);
@@ -37,4 +37,5 @@ private:
     void drawChargeLevel(QPainter &painter, const QRect &batteryRect);
 };
 
-#endif // TNEWBATTERY_H
+
+#endif // TPNEWBATTERY_H

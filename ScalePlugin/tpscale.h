@@ -1,11 +1,12 @@
-#ifndef TSCALE_H
-#define TSCALE_H
+#ifndef TPSCALE_H
+#define TPSCALE_H
 
 #include <QWidget>
 #include <QList>
 #include <QPainter>
+#include <QtUiPlugin/QDesignerExportWidget>
 
-class TScale : public QWidget
+class QDESIGNER_WIDGET_EXPORT TPScale : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(int level READ level WRITE setLevel NOTIFY levelChanged)
@@ -18,7 +19,7 @@ class TScale : public QWidget
     // Q_PROPERTY(int widgetHeight READ widgetHeight WRITE setWidgetHeight)
 
 public:
-    explicit TScale(QWidget *parent = nullptr);
+    explicit TPScale(QWidget *parent = nullptr);
 
     int level() const;
     void setLevel(int level);
@@ -73,4 +74,5 @@ private:
     QList<QString> m_labels;
 };
 
-#endif // TSCALE_H
+
+#endif // TPSCALE_H
