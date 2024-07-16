@@ -14,33 +14,23 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="TPBattery" name="tPBattery">
+   <widget class="TNewBattery" name="widget_5" native="true">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>200</y>
-      <width>41</width>
-      <height>71</height>
+      <x>350</x>
+      <y>250</y>
+      <width>291</width>
+      <height>141</height>
      </rect>
     </property>
    </widget>
-   <widget class="TPDial" name="tPDial">
+   <widget class="TScale" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>280</y>
-      <width>16</width>
-      <height>16</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="Heater" name="widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>590</x>
-      <y>140</y>
-      <width>111</width>
-      <height>261</height>
+      <x>90</x>
+      <y>60</y>
+      <width>120</width>
+      <height>80</height>
      </rect>
     </property>
    </widget>
@@ -51,7 +41,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>19</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>
@@ -59,19 +49,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>TPBattery</class>
+   <class>TNewBattery</class>
    <extends>QWidget</extends>
-   <header>tpbattery.h</header>
+   <header>tnewbattery.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
-   <class>TPDial</class>
+   <class>TScale</class>
    <extends>QWidget</extends>
-   <header>tpdial.h</header>
-  </customwidget>
-  <customwidget>
-   <class>Heater</class>
-   <extends>QWidget</extends>
-   <header>heater.h</header>
+   <header>tscale.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

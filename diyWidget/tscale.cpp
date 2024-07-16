@@ -215,8 +215,8 @@ void TScale::paintEvent(QPaintEvent *event)
     painter.setFont(QFont("Arial", m_widgetHeight/25)); // 字体缩小一倍
     for (int i = 0; i <= m_division; ++i)
     {
-        int y = m_widgetHeight/10 + i * longStep - m_widgetHeight/30;
-        painter.drawText(m_widgetWidth/10*1.5 + longLength, y, m_widgetWidth*4/10, m_widgetWidth/10, Qt::AlignLeft, m_labels[m_division - i]); // 自上而下递减，标签位置调整
+        int y = m_widgetHeight/10 + i * longStep - m_widgetHeight/40;
+        painter.drawText(m_widgetWidth/10*2 + longLength, y, m_widgetWidth*4/10, m_widgetWidth/10, Qt::AlignLeft, m_labels[m_division - i]); // 自上而下递减，标签位置调整
     }
 
     // 绘制当前值水平线段
