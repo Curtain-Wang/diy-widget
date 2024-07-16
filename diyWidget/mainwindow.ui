@@ -17,18 +17,18 @@
    <widget class="TNewBattery" name="widget_5" native="true">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>250</y>
-      <width>291</width>
-      <height>141</height>
+      <x>210</x>
+      <y>110</y>
+      <width>151</width>
+      <height>271</height>
      </rect>
     </property>
    </widget>
    <widget class="TScale" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>60</y>
+      <x>70</x>
+      <y>50</y>
       <width>120</width>
       <height>80</height>
      </rect>
