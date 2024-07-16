@@ -1,14 +1,14 @@
-#include "TScale.h"
+#include "tpscale.h"
 #include <QResizeEvent>
 
-TScale::TScale(QWidget *parent)
+TPScale::TPScale(QWidget *parent)
     : QWidget(parent)
 {
     updateLabels();
     setMinimumSize(100, 200); // 设置最小尺寸，宽高比为1:2
 }
 
-void TScale::updateLabels()
+void TPScale::updateLabels()
 {
     m_labels.clear();
     double step = static_cast<double>(m_highest - m_lowest) / m_division;
@@ -18,12 +18,12 @@ void TScale::updateLabels()
     }
 }
 
-int TScale::level() const
+int TPScale::level() const
 {
     return m_level;
 }
 
-void TScale::setLevel(int level)
+void TPScale::setLevel(int level)
 {
     if (m_level != level)
     {
@@ -33,70 +33,70 @@ void TScale::setLevel(int level)
     }
 }
 
-int TScale::warnLevelLow() const
+int TPScale::warnLevelLow() const
 {
     return m_warnLevelLow;
 }
 
-void TScale::setWarnLevelLow(int warnLevelLow)
+void TPScale::setWarnLevelLow(int warnLevelLow)
 {
     m_warnLevelLow = warnLevelLow;
     update();
 }
 
-int TScale::warnLevelHigh() const
+int TPScale::warnLevelHigh() const
 {
     return m_warnLevelHigh;
 }
 
-void TScale::setWarnLevelHigh(int warnLevelHigh)
+void TPScale::setWarnLevelHigh(int warnLevelHigh)
 {
     m_warnLevelHigh = warnLevelHigh;
     update();
 }
 
-int TScale::highest() const
+int TPScale::highest() const
 {
     return m_highest;
 }
 
-void TScale::setHighest(int highest)
+void TPScale::setHighest(int highest)
 {
     m_highest = highest;
     updateLabels();
     update();
 }
 
-int TScale::lowest() const
+int TPScale::lowest() const
 {
     return m_lowest;
 }
 
-void TScale::setLowest(int lowest)
+void TPScale::setLowest(int lowest)
 {
     m_lowest = lowest;
     updateLabels();
     update();
 }
 
-int TScale::division() const
+int TPScale::division() const
 {
     return m_division;
 }
 
-void TScale::setDivision(int division)
+void TPScale::setDivision(int division)
 {
     m_division = division;
     updateLabels();
     update();
 }
 
-// int TScale::widgetWidth() const
+// int TPScale::widgetWidth() const
 // {
 //     return width();
 // }
 
-// void TScale::setWidgetWidth(int widgetWidth)
+// void TPScale::setWidgetWidth(int widgetWidth)
 // {
 //     if (width() != widgetWidth)
 //     {
@@ -105,12 +105,12 @@ void TScale::setDivision(int division)
 //     }
 // }
 
-// int TScale::widgetHeight() const
+// int TPScale::widgetHeight() const
 // {
 //     return height();
 // }
 
-// void TScale::setWidgetHeight(int widgetHeight)
+// void TPScale::setWidgetHeight(int widgetHeight)
 // {
 //     if (height() != widgetHeight)
 //     {
@@ -119,22 +119,22 @@ void TScale::setDivision(int division)
 //     }
 // }
 
-QSize TScale::sizeHint() const
+QSize TPScale::sizeHint() const
 {
     return QSize(width(), height());
 }
 
-QSize TScale::minimumSizeHint() const
+QSize TPScale::minimumSizeHint() const
 {
     return QSize(width(), height());
 }
 
-void TScale::resizeEvent(QResizeEvent *event)
+void TPScale::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
 }
 
-void TScale::paintEvent(QPaintEvent *event)
+void TPScale::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);

@@ -13,13 +13,17 @@ SOURCES += \
     heater.cpp \
     main.cpp \
     mainwindow.cpp \
-    mydial.cpp
+    mydial.cpp \
+    tnewbattery.cpp \
+    tscale.cpp
 
 HEADERS += \
     customline.h \
     heater.h \
     mainwindow.h \
-    mydial.h
+    mydial.h \
+    tnewbattery.h \
+    tscale.h
 
 FORMS += \
     mainwindow.ui
