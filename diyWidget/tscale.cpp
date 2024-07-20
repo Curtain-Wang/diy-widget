@@ -6,6 +6,16 @@ TScale::TScale(QWidget *parent)
 {
     updateLabels();
     setMinimumSize(100, 200); // 设置最小尺寸，宽高比为1:2
+ // 设置最小尺寸，宽高比为1:2
+    checkWarnLevel();
+}
+
+void TScale::checkWarnLevel()
+{
+    setWarnLevelHigh(m_warnLevelHigh);
+    setWarnLevelLow(m_warnLevelLow);
+
+
 }
 
 void TScale::updateLabels()
@@ -40,6 +50,8 @@ int TScale::warnLevelLow() const
 
 void TScale::setWarnLevelLow(int warnLevelLow)
 {
+    if (warnLevelLow > m_lowest)
+        warnLevelLow = m_lowest;
     m_warnLevelLow = warnLevelLow;
     update();
 }
@@ -51,6 +63,8 @@ int TScale::warnLevelHigh() const
 
 void TScale::setWarnLevelHigh(int warnLevelHigh)
 {
+    if (warnLevelHigh > m_highest)
+        warnLevelHigh = m_highest;
     m_warnLevelHigh = warnLevelHigh;
     update();
 }
@@ -62,6 +76,7 @@ int TScale::highest() const
 
 void TScale::setHighest(int highest)
 {
+
     m_highest = highest;
     updateLabels();
     update();
@@ -153,6 +168,7 @@ void TScale::paintEvent(QPaintEvent *event)
     int longLength = width() / 2; // 原来的1/2长度
     int midLength = longLength * 2 / 5; // 中刻度线长度
     int shortLength = longLength * 1 / 5; // 短刻度线长度
+
     // 绘制背景颜色
     int warnLowY = height() / 10 + (m_highest - m_warnLevelLow) * height() * 8 / 10 / (m_highest - m_lowest);
     int warnHighY = height() / 10 + (m_highest - m_warnLevelHigh) * height() * 8 / 10 / (m_highest - m_lowest);
@@ -182,20 +198,21 @@ void TScale::paintEvent(QPaintEvent *event)
     int longStep = height()*8/10 / m_division;
     for (int i = 0; i <= m_division; ++i)
     {
-        int y = height()/10 + i * longStep;
+        double y = height()/10 + i * longStep;
         painter.drawLine(width()/10, y, width()/10 + longLength, y);
     }
 
     // 绘制中刻度线和短刻度线
     pen.setWidth(1);
     painter.setPen(pen);
-    int shortStep = longStep / 4;
+    double shortStep = longStep / 4;
     for (int i = 0; i < m_division; ++i)
     {
-        int baseY = height()/10 + i * longStep;
+        double baseY = height()/10 + i * longStep;
+
         for (int j = 1; j <= 3; ++j)
         {
-            int y = baseY + j * shortStep;
+            double y = baseY + j * shortStep;
             if (j == 2) // 中刻度线
             {
                 painter.drawLine(width()/10 + longLength / 2 - midLength / 2, y, width()/10 + longLength / 2 + midLength / 2, y);

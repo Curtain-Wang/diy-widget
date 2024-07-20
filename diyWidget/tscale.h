@@ -56,16 +56,15 @@ signals:
     void levelChanged(int level);
 
 private:
+    void checkWarnLevel();
     void updateLabels();
 
     int m_level = 37;
     int m_warnLevelLow = 10;
     int m_warnLevelHigh = 90;
-    int m_highest = 100;
+    int m_highest = 60;
     int m_lowest = 0;
     int m_division = 5;
-    // int m_widgetWidth = 200;
-    // int m_widgetHeight = 400;
     int m_minWidth = 50;
     int m_minHeight = 100;
     int m_scale = 2;//高宽比
