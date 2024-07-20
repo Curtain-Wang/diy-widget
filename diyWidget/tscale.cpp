@@ -28,7 +28,7 @@ void TScale::updateLabels()
     }
 }
 
-int TScale::level() const
+double TScale::level() const
 {
     return m_level;
 }
@@ -43,20 +43,20 @@ void TScale::setLevel(int level)
     }
 }
 
-int TScale::warnLevelLow() const
+double TScale::warnLevelLow() const
 {
     return m_warnLevelLow;
 }
 
 void TScale::setWarnLevelLow(int warnLevelLow)
 {
-    if (warnLevelLow > m_lowest)
+    if (warnLevelLow < m_lowest)
         warnLevelLow = m_lowest;
     m_warnLevelLow = warnLevelLow;
     update();
 }
 
-int TScale::warnLevelHigh() const
+double TScale::warnLevelHigh() const
 {
     return m_warnLevelHigh;
 }
@@ -69,7 +69,7 @@ void TScale::setWarnLevelHigh(int warnLevelHigh)
     update();
 }
 
-int TScale::highest() const
+double TScale::highest() const
 {
     return m_highest;
 }
@@ -82,7 +82,7 @@ void TScale::setHighest(int highest)
     update();
 }
 
-int TScale::lowest() const
+double TScale::lowest() const
 {
     return m_lowest;
 }
@@ -169,57 +169,50 @@ void TScale::paintEvent(QPaintEvent *event)
     int midLength = longLength * 2 / 5; // 中刻度线长度
     int shortLength = longLength * 1 / 5; // 短刻度线长度
 
-    // 绘制背景颜色
-    int warnLowY = height() / 10 + (m_highest - m_warnLevelLow) * height() * 8 / 10 / (m_highest - m_lowest);
-    int warnHighY = height() / 10 + (m_highest - m_warnLevelHigh) * height() * 8 / 10 / (m_highest - m_lowest);
+    double warnLowY = height() / 10.0 + (m_highest - m_warnLevelLow) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+    double warnHighY = height() / 10.0 + (m_highest - m_warnLevelHigh) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
 
     // 绘制危险区间 (上方区域)
     painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
-    painter.drawRect(width() / 10 + longLength/10, height() / 10, longLength*8/10, warnHighY - height() / 10);
+    painter.drawRect(width() / 10.0 + longLength / 10.0, height() / 10.0, longLength * 8.0 / 10.0, warnHighY - height() / 10.0);
 
     // 绘制安全区间
     painter.setBrush(QColor(0, 255, 0, 170)); // 绿色，半透明
-    painter.drawRect(width() / 10 + longLength/10, warnHighY, longLength*8/10, warnLowY - warnHighY);
+    painter.drawRect(width() / 10.0 + longLength / 10.0, warnHighY, longLength * 8.0 / 10.0, warnLowY - warnHighY);
 
     // 绘制危险区间 (下方区域)
     painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
-    painter.drawRect(width() / 10 + longLength/10, warnLowY, longLength*8/10, height() * 9 / 10 - warnLowY);
+    painter.drawRect(width() / 10.0 + longLength / 10.0, warnLowY, longLength * 8.0 / 10.0, height() * 9.0 / 10.0 - warnLowY);
 
     // 绘制刻度线中心的黑色线段
     // pen.setColor(Qt::black);
     // pen.setWidth(1);
     // painter.setPen(pen);
-    // painter.drawLine(width()/10 + longLength / 2, height()/10, width()/10 + longLength / 2, height()*9/10);
+    // painter.drawLine(width() / 10.0 + longLength / 2.0, height() / 10.0, width() / 10.0 + longLength / 2.0, height() * 9.0 / 10.0);
 
     // 绘制长刻度线
     pen.setColor(Qt::gray);
     pen.setWidth(2);
     painter.setPen(pen);
-    int longStep = height()*8/10 / m_division;
-    for (int i = 0; i <= m_division; ++i)
-    {
-        double y = height()/10 + i * longStep;
-        painter.drawLine(width()/10, y, width()/10 + longLength, y);
+    double longStep = height() * 8.0 / 10.0 / m_division;
+    for (int i = 0; i <= m_division; ++i) {
+        double y = height() / 10.0 + i * longStep;
+        painter.drawLine(width() / 10.0, y, width() / 10.0 + longLength, y);
     }
 
     // 绘制中刻度线和短刻度线
     pen.setWidth(1);
     painter.setPen(pen);
-    double shortStep = longStep / 4;
-    for (int i = 0; i < m_division; ++i)
-    {
-        double baseY = height()/10 + i * longStep;
+    double shortStep = longStep / 4.0;
+    for (int i = 0; i < m_division; ++i) {
+        double baseY = height() / 10.0 + i * longStep;
 
-        for (int j = 1; j <= 3; ++j)
-        {
+        for (int j = 1; j <= 3; ++j) {
             double y = baseY + j * shortStep;
-            if (j == 2) // 中刻度线
-            {
-                painter.drawLine(width()/10 + longLength / 2 - midLength / 2, y, width()/10 + longLength / 2 + midLength / 2, y);
-            }
-            else // 短刻度线
-            {
-                painter.drawLine(width()/10 + longLength / 2 - shortLength / 2, y, width()/10 + longLength / 2 + shortLength / 2, y);
+            if (j == 2) { // 中刻度线
+                painter.drawLine(width() / 10.0 + longLength / 2.0 - midLength / 2.0, y, width() / 10.0 + longLength / 2.0 + midLength / 2.0, y);
+            } else { // 短刻度线
+                painter.drawLine(width() / 10.0 + longLength / 2.0 - shortLength / 2.0, y, width() / 10.0 + longLength / 2.0 + shortLength / 2.0, y);
             }
         }
     }
@@ -227,12 +220,12 @@ void TScale::paintEvent(QPaintEvent *event)
     // 绘制标签
     pen.setColor(Qt::blue);
     painter.setPen(pen);
-    painter.setFont(QFont("Arial", height()/25)); // 字体缩小一倍
-    for (int i = 0; i <= m_division; ++i)
-    {
-        int y = height()/10 + i * longStep - height()/40;
-        painter.drawText(width()/10*2 + longLength, y, width()*4/10, width()/10, Qt::AlignLeft, m_labels[m_division - i]); // 自上而下递减，标签位置调整
+    painter.setFont(QFont("Arial", height() / 25)); // 字体缩小一倍
+    for (int i = 0; i <= m_division; ++i) {
+        double y = height() / 10.0 + i * longStep - height() / 40.0;
+        painter.drawText(width() / 10.0 * 2 + longLength, y, width() * 4.0 / 10.0, height() / 10.0, Qt::AlignLeft, m_labels[m_division - i]); // 自上而下递减，标签位置调整
     }
+
 
     // 绘制当前值水平线段
     pen.setColor(Qt::red);

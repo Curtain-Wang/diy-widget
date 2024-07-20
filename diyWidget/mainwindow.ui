@@ -17,10 +17,10 @@
    <widget class="TScale" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>120</y>
-      <width>401</width>
-      <height>321</height>
+      <x>280</x>
+      <y>100</y>
+      <width>171</width>
+      <height>461</height>
      </rect>
     </property>
    </widget>

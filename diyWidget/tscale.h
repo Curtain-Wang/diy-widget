@@ -20,19 +20,19 @@ class TScale : public QWidget
 public:
     explicit TScale(QWidget *parent = nullptr);
 
-    int level() const;
+    double level() const;
     void setLevel(int level);
 
-    int warnLevelLow() const;
+    double warnLevelLow() const;
     void setWarnLevelLow(int warnLevelLow);
 
-    int warnLevelHigh() const;
+    double warnLevelHigh() const;
     void setWarnLevelHigh(int warnLevelHigh);
 
-    int highest() const;
+    double highest() const;
     void setHighest(int highest);
 
-    int lowest() const;
+    double lowest() const;
     void setLowest(int lowest);
 
     int division() const;
@@ -59,11 +59,11 @@ private:
     void checkWarnLevel();
     void updateLabels();
 
-    int m_level = 37;
-    int m_warnLevelLow = 10;
-    int m_warnLevelHigh = 90;
-    int m_highest = 60;
-    int m_lowest = 0;
+    double m_level = 37.0;
+    double m_warnLevelLow = 12.0;
+    double m_warnLevelHigh = 48.0;
+    double m_highest = 60.0;
+    double m_lowest = 0.0;
     int m_division = 5;
     int m_minWidth = 50;
     int m_minHeight = 100;
