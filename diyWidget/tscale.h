@@ -8,11 +8,11 @@
 class TScale : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(int level READ level WRITE setLevel NOTIFY levelChanged)
-    Q_PROPERTY(int warnLevelLow READ warnLevelLow WRITE setWarnLevelLow)
-    Q_PROPERTY(int warnLevelHigh READ warnLevelHigh WRITE setWarnLevelHigh)
-    Q_PROPERTY(int highest READ highest WRITE setHighest)
-    Q_PROPERTY(int lowest READ lowest WRITE setLowest)
+    Q_PROPERTY(double level READ level WRITE setLevel NOTIFY levelChanged)
+    Q_PROPERTY(double warnLevelLow READ warnLevelLow WRITE setWarnLevelLow)
+    Q_PROPERTY(double warnLevelHigh READ warnLevelHigh WRITE setWarnLevelHigh)
+    Q_PROPERTY(double highest READ highest WRITE setHighest)
+    Q_PROPERTY(double lowest READ lowest WRITE setLowest)
     Q_PROPERTY(int division READ division WRITE setDivision)
     // Q_PROPERTY(int widgetWidth READ widgetWidth WRITE setWidgetWidth)
     // Q_PROPERTY(int widgetHeight READ widgetHeight WRITE setWidgetHeight)
@@ -21,19 +21,19 @@ public:
     explicit TScale(QWidget *parent = nullptr);
 
     double level() const;
-    void setLevel(int level);
+    void setLevel(double level);
 
     double warnLevelLow() const;
-    void setWarnLevelLow(int warnLevelLow);
+    void setWarnLevelLow(double warnLevelLow);
 
     double warnLevelHigh() const;
-    void setWarnLevelHigh(int warnLevelHigh);
+    void setWarnLevelHigh(double warnLevelHigh);
 
     double highest() const;
-    void setHighest(int highest);
+    void setHighest(double highest);
 
     double lowest() const;
-    void setLowest(int lowest);
+    void setLowest(double lowest);
 
     int division() const;
     void setDivision(int division);

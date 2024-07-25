@@ -33,7 +33,7 @@ double TScale::level() const
     return m_level;
 }
 
-void TScale::setLevel(int level)
+void TScale::setLevel(double level)
 {
     if (m_level != level)
     {
@@ -48,7 +48,7 @@ double TScale::warnLevelLow() const
     return m_warnLevelLow;
 }
 
-void TScale::setWarnLevelLow(int warnLevelLow)
+void TScale::setWarnLevelLow(double warnLevelLow)
 {
     if (warnLevelLow < m_lowest)
         warnLevelLow = m_lowest;
@@ -61,7 +61,7 @@ double TScale::warnLevelHigh() const
     return m_warnLevelHigh;
 }
 
-void TScale::setWarnLevelHigh(int warnLevelHigh)
+void TScale::setWarnLevelHigh(double warnLevelHigh)
 {
     if (warnLevelHigh > m_highest)
         warnLevelHigh = m_highest;
@@ -74,7 +74,7 @@ double TScale::highest() const
     return m_highest;
 }
 
-void TScale::setHighest(int highest)
+void TScale::setHighest(double highest)
 {
 
     m_highest = highest;
@@ -87,7 +87,7 @@ double TScale::lowest() const
     return m_lowest;
 }
 
-void TScale::setLowest(int lowest)
+void TScale::setLowest(double lowest)
 {
     m_lowest = lowest;
     updateLabels();
