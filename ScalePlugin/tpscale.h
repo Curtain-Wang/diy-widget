@@ -9,11 +9,11 @@
 class QDESIGNER_WIDGET_EXPORT TPScale : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(int level READ level WRITE setLevel NOTIFY levelChanged)
-    Q_PROPERTY(int warnLevelLow READ warnLevelLow WRITE setWarnLevelLow)
-    Q_PROPERTY(int warnLevelHigh READ warnLevelHigh WRITE setWarnLevelHigh)
-    Q_PROPERTY(int highest READ highest WRITE setHighest)
-    Q_PROPERTY(int lowest READ lowest WRITE setLowest)
+    Q_PROPERTY(double level READ level WRITE setLevel NOTIFY levelChanged)
+    Q_PROPERTY(double warnLevelLow READ warnLevelLow WRITE setWarnLevelLow)
+    Q_PROPERTY(double warnLevelHigh READ warnLevelHigh WRITE setWarnLevelHigh)
+    Q_PROPERTY(double highest READ highest WRITE setHighest)
+    Q_PROPERTY(double lowest READ lowest WRITE setLowest)
     Q_PROPERTY(int division READ division WRITE setDivision)
     // Q_PROPERTY(int widgetWidth READ widgetWidth WRITE setWidgetWidth)
     // Q_PROPERTY(int widgetHeight READ widgetHeight WRITE setWidgetHeight)
@@ -21,20 +21,20 @@ class QDESIGNER_WIDGET_EXPORT TPScale : public QWidget
 public:
     explicit TPScale(QWidget *parent = nullptr);
 
-    int level() const;
-    void setLevel(int level);
+    double level() const;
+    void setLevel(double level);
 
-    int warnLevelLow() const;
-    void setWarnLevelLow(int warnLevelLow);
+    double warnLevelLow() const;
+    void setWarnLevelLow(double warnLevelLow);
 
-    int warnLevelHigh() const;
-    void setWarnLevelHigh(int warnLevelHigh);
+    double warnLevelHigh() const;
+    void setWarnLevelHigh(double warnLevelHigh);
 
-    int highest() const;
-    void setHighest(int highest);
+    double highest() const;
+    void setHighest(double highest);
 
-    int lowest() const;
-    void setLowest(int lowest);
+    double lowest() const;
+    void setLowest(double lowest);
 
     int division() const;
     void setDivision(int division);
@@ -54,19 +54,18 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 
 signals:
-    void levelChanged(int level);
+    void levelChanged(double level);
 
 private:
+    void checkWarnLevel();
     void updateLabels();
 
-    int m_level = 37;
-    int m_warnLevelLow = 10;
-    int m_warnLevelHigh = 90;
-    int m_highest = 100;
-    int m_lowest = 0;
+    double m_level = 37.0;
+    double m_warnLevelLow = 12.0;
+    double m_warnLevelHigh = 48.0;
+    double m_highest = 60.0;
+    double m_lowest = 0.0;
     int m_division = 5;
-    // int m_widgetWidth = 200;
-    // int m_widgetHeight = 400;
     int m_minWidth = 50;
     int m_minHeight = 100;
     int m_scale = 2;//高宽比
