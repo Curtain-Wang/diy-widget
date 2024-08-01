@@ -20,7 +20,8 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     m_packColor3(Qt::gray),  // 初始化为灰色
     m_packColor4(Qt::gray),  // 初始化为灰色
     m_packColor5(Qt::gray),  // 初始化为灰色
-    m_packColor6(Qt::gray)   // 初始化为灰色
+    m_packColor6(Qt::gray),   // 初始化为灰色
+    m_language(2) //默认中文
 {
     setMinimumSize(200, 140);
 }
@@ -214,6 +215,18 @@ void CircuitDiagramWidget2::setPackColor6(const QColor &color) {
         m_packColor6 = color;
         emit packColor6Changed(color);
         update();
+    }
+}
+
+quint8 CircuitDiagramWidget2::language() const {
+    return m_language;
+}
+
+void CircuitDiagramWidget2::setLanguage(const quint8 &language) {
+    if (m_language != language) {
+        m_language = language;
+        emit languageChanged(m_language);
+        update(); // 更新界面以反映语言更改
     }
 }
 
@@ -932,7 +945,7 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
     QPen borderPen(Qt::black); // 边框线条颜色
     borderPen.setWidth(2);
     painter.setPen(borderPen);
-    painter.drawRect(0, 0, width() - 1, height() - 1); // 绘制画布的黑色边框
+    // painter.drawRect(0, 0, width() - 1, height() - 1); // 绘制画布的黑色边框
 
     // 动态调整字体大小
     QFont font = painter.font();
@@ -981,7 +994,14 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
     painter.setPen(Qt::black);
     int textX = batteryRect.right() + width() / 20; // "串电压" 文字的X位置
     int textY = batteryRect.top() - height() / 10; // "串电压" 文字的Y位置
-    painter.drawText(textX, textY, tr("串电压"));
+    font.setPointSize(width() / 50);
+    painter.setFont(font);
+    if(m_language == 2)
+    {
+        painter.drawText(textX, textY, tr("串电压"));
+    }else{
+        painter.drawText(textX, textY, tr("pack V."));
+    }
 
     int rectWidth = width() / 15; // 方框的宽度
     int rectHeight = height() / 10; // 方框的高度

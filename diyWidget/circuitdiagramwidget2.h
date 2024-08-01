@@ -23,6 +23,7 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(QColor packColor4 READ packColor4 WRITE setPackColor4 NOTIFY packColor4Changed)
     Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
+    Q_PROPERTY(quint8 language READ language WRITE setLanguage NOTIFY languageChanged)
 
 public:
     explicit CircuitDiagramWidget2(QWidget *parent = nullptr);
@@ -75,6 +76,9 @@ public:
     QColor packColor6() const;
     void setPackColor6(const QColor &color);
 
+    quint8 language() const;
+    void setLanguage(const quint8 &language);
+
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
@@ -116,6 +120,7 @@ signals:
     void packColor4Changed(const QColor &color);
     void packColor5Changed(const QColor &color);
     void packColor6Changed(const QColor &color);
+    void languageChanged(quint8 language);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -137,6 +142,7 @@ private:
     QColor m_packColor4;
     QColor m_packColor5;
     QColor m_packColor6;
+    quint8 m_language;
 
 private:
     int chargeContactorEndx;
