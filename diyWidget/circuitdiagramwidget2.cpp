@@ -14,7 +14,14 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     , m_heaterFaultContactorClosed(false)
     , m_isHeating(false)
     , m_heaterContactorClosed(false)
-    , m_limitedContactorClosed(false){
+    , m_limitedContactorClosed(false),
+    m_packColor1(Qt::gray),  // 初始化为灰色
+    m_packColor2(Qt::gray),  // 初始化为灰色
+    m_packColor3(Qt::gray),  // 初始化为灰色
+    m_packColor4(Qt::gray),  // 初始化为灰色
+    m_packColor5(Qt::gray),  // 初始化为灰色
+    m_packColor6(Qt::gray)   // 初始化为灰色
+{
     setMinimumSize(200, 140);
 }
 
@@ -134,6 +141,78 @@ void CircuitDiagramWidget2::setLimitedContactorClosed(bool closed) {
     if (closed != m_limitedContactorClosed) {
         m_limitedContactorClosed = closed;
         emit limitedContactorClosedChanged(closed);
+        update();
+    }
+}
+
+QColor CircuitDiagramWidget2::packColor1() const {
+    return m_packColor1;
+}
+
+void CircuitDiagramWidget2::setPackColor1(const QColor &color) {
+    if (color != m_packColor1) {
+        m_packColor1 = color;
+        emit packColor1Changed(color);
+        update();
+    }
+}
+
+QColor CircuitDiagramWidget2::packColor2() const {
+    return m_packColor2;
+}
+
+void CircuitDiagramWidget2::setPackColor2(const QColor &color) {
+    if (color != m_packColor2) {
+        m_packColor2 = color;
+        emit packColor2Changed(color);
+        update();
+    }
+}
+
+QColor CircuitDiagramWidget2::packColor3() const {
+    return m_packColor3;
+}
+
+void CircuitDiagramWidget2::setPackColor3(const QColor &color) {
+    if (color != m_packColor3) {
+        m_packColor3 = color;
+        emit packColor3Changed(color);
+        update();
+    }
+}
+
+QColor CircuitDiagramWidget2::packColor4() const {
+    return m_packColor4;
+}
+
+void CircuitDiagramWidget2::setPackColor4(const QColor &color) {
+    if (color != m_packColor4) {
+        m_packColor4 = color;
+        emit packColor4Changed(color);
+        update();
+    }
+}
+
+QColor CircuitDiagramWidget2::packColor5() const {
+    return m_packColor5;
+}
+
+void CircuitDiagramWidget2::setPackColor5(const QColor &color) {
+    if (color != m_packColor5) {
+        m_packColor5 = color;
+        emit packColor5Changed(color);
+        update();
+    }
+}
+
+QColor CircuitDiagramWidget2::packColor6() const {
+    return m_packColor6;
+}
+
+void CircuitDiagramWidget2::setPackColor6(const QColor &color) {
+    if (color != m_packColor6) {
+        m_packColor6 = color;
+        emit packColor6Changed(color);
         update();
     }
 }
@@ -848,11 +927,12 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
+    offsetX = -width() * 1 / 28;
     // 绘制画布边框
     QPen borderPen(Qt::black); // 边框线条颜色
     borderPen.setWidth(2);
     painter.setPen(borderPen);
-    // painter.drawRect(0, 0, width() - 1, height() - 1); // 绘制画布的黑色边框
+    painter.drawRect(0, 0, width() - 1, height() - 1); // 绘制画布的黑色边框
 
     // 动态调整字体大小
     QFont font = painter.font();
@@ -875,7 +955,7 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
     int horizontalMargin = width() / 9;
 
     // 电池主体
-    QRect batteryRect(width() - batteryWidth - horizontalMargin, verticalMargin, batteryWidth, batteryHeight);
+    QRect batteryRect(width() - batteryWidth - horizontalMargin + offsetX, verticalMargin, batteryWidth, batteryHeight);
 
     // 深蓝色长方形
     int borderSize = batteryRect.width() / 20;
@@ -896,4 +976,30 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
 
     // 绘制从电池负极出来的线
     drawWireFromNegativeElectrode(painter, batteryRect.x(), batteryRect.y(), batteryRect.width(), batteryRect.height());
+
+    // 绘制右侧的“串电压”和方框
+    painter.setPen(Qt::black);
+    int textX = batteryRect.right() + width() / 20; // "串电压" 文字的X位置
+    int textY = batteryRect.top() - height() / 10; // "串电压" 文字的Y位置
+    painter.drawText(textX, textY, tr("串电压"));
+
+    int rectWidth = width() / 15; // 方框的宽度
+    int rectHeight = height() / 10; // 方框的高度
+    int rectSpacing = height() / 40; // 方框之间的间距
+
+    QList<QColor> colors = {m_packColor1, m_packColor2, m_packColor3, m_packColor4, m_packColor5, m_packColor6};
+
+    for (int i = 1; i <= 6; ++i) {
+        painter.setPen(Qt::black);
+        painter.setBrush(colors[i - 1]);
+        int rectX = textX + 10; // 方框的X位置
+        int rectY = textY + rectSpacing * 2 + (i - 1) * (rectHeight + rectSpacing); // 方框的Y位置
+
+        // 绘制序号
+        painter.drawText(rectX - 20, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
+
+        // 绘制方框
+        painter.drawRect(rectX, rectY, rectWidth, rectHeight);
+    }
+
 }

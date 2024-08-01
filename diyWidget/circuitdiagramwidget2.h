@@ -17,6 +17,12 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(bool isHeating READ isHeating WRITE setIsHeating NOTIFY isHeatingChanged)
     Q_PROPERTY(bool heaterContactorClosed READ heaterContactorClosed WRITE setHeaterContactorClosed NOTIFY heaterContactorClosedChanged)
     Q_PROPERTY(bool limitedContactorClosed READ limitedContactorClosed WRITE setLimitedContactorClosed NOTIFY limitedContactorClosedChanged)
+    Q_PROPERTY(QColor packColor1 READ packColor1 WRITE setPackColor1 NOTIFY packColor1Changed)
+    Q_PROPERTY(QColor packColor2 READ packColor2 WRITE setPackColor2 NOTIFY packColor2Changed)
+    Q_PROPERTY(QColor packColor3 READ packColor3 WRITE setPackColor3 NOTIFY packColor3Changed)
+    Q_PROPERTY(QColor packColor4 READ packColor4 WRITE setPackColor4 NOTIFY packColor4Changed)
+    Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
+    Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
 
 public:
     explicit CircuitDiagramWidget2(QWidget *parent = nullptr);
@@ -50,6 +56,25 @@ public:
 
     bool limitedContactorClosed() const;
     void setLimitedContactorClosed(bool closed);
+
+    QColor packColor1() const;
+    void setPackColor1(const QColor &color);
+
+    QColor packColor2() const;
+    void setPackColor2(const QColor &color);
+
+    QColor packColor3() const;
+    void setPackColor3(const QColor &color);
+
+    QColor packColor4() const;
+    void setPackColor4(const QColor &color);
+
+    QColor packColor5() const;
+    void setPackColor5(const QColor &color);
+
+    QColor packColor6() const;
+    void setPackColor6(const QColor &color);
+
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
@@ -85,6 +110,12 @@ signals:
     void isHeatingChanged(bool heating);
     void heaterContactorClosedChanged(bool closed);
     void limitedContactorClosedChanged(bool closed);
+    void packColor1Changed(const QColor &color);
+    void packColor2Changed(const QColor &color);
+    void packColor3Changed(const QColor &color);
+    void packColor4Changed(const QColor &color);
+    void packColor5Changed(const QColor &color);
+    void packColor6Changed(const QColor &color);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -100,8 +131,16 @@ private:
     bool m_isHeating;
     bool m_heaterContactorClosed;
     bool m_limitedContactorClosed;
+    QColor m_packColor1;
+    QColor m_packColor2;
+    QColor m_packColor3;
+    QColor m_packColor4;
+    QColor m_packColor5;
+    QColor m_packColor6;
+
 private:
     int chargeContactorEndx;
+    int offsetX;
 };
 
 #endif // CIRCUITDIAGRAMWIDGET2_H
