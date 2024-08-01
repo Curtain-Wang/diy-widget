@@ -1038,10 +1038,10 @@ void TPSecCircuitDiagram::resizeEvent(QResizeEvent *event)
     int newWidthBasedOnHeight = static_cast<int>(currentHeight * aspectRatio);
 
     // 根据最小差值选择调整方式
-    if (abs(newHeightBasedOnWidth - currentHeight) < abs(newWidthBasedOnHeight - currentWidth)) {
-        // 根据宽度调整高度
+    if(currentHeight > newHeightBasedOnWidth){
+        //根据宽度调整高度
         resize(currentWidth, newHeightBasedOnWidth);
-    } else {
+    }else{
         // 根据高度调整宽度
         resize(newWidthBasedOnHeight, currentHeight);
     }
