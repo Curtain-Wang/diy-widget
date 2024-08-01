@@ -4,6 +4,7 @@
 #include <QBrush>
 #include <QLinearGradient>
 #include  <QPainterPath>
+#include <QResizeEvent>
 
 TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
     : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
@@ -1021,5 +1022,28 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
         // 绘制方框
         painter.drawRect(rectX, rectY, rectWidth, rectHeight);
     }
+}
 
+void TPSecCircuitDiagram::resizeEvent(QResizeEvent *event)
+{
+    // 目标宽高比
+    const float aspectRatio = 746.0f / 305.0f;
+
+    // 获取当前尺寸
+    int currentWidth = event->size().width();
+    int currentHeight = event->size().height();
+
+    // 计算基于宽度和高度的目标尺寸
+    int newHeightBasedOnWidth = static_cast<int>(currentWidth / aspectRatio);
+    int newWidthBasedOnHeight = static_cast<int>(currentHeight * aspectRatio);
+
+    // 根据最小差值选择调整方式
+    if (abs(newHeightBasedOnWidth - currentHeight) < abs(newWidthBasedOnHeight - currentWidth)) {
+        // 根据宽度调整高度
+        resize(currentWidth, newHeightBasedOnWidth);
+    } else {
+        // 根据高度调整宽度
+        resize(newWidthBasedOnHeight, currentHeight);
+    }
+    QWidget::resizeEvent(event);
 }

@@ -103,6 +103,7 @@ public:
     void drawHeaterContactor(QPainter &painter, int x, int y);
     void drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX);
     void drawLimitedContactor(QPainter &painter, int x, int y);
+
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -147,6 +148,10 @@ private:
 private:
     int chargeContactorEndx;
     int offsetX;
+
+    // QWidget interface
+protected:
+    void resizeEvent(QResizeEvent *event);
 };
 
 #endif // CIRCUITDIAGRAMWIDGET2_H

@@ -148,6 +148,10 @@ private:
 private:
     int chargeContactorEndx;
     int offsetX;
+
+    // QWidget interface
+protected:
+    void resizeEvent(QResizeEvent *event);
 };
 
 #endif // TPSECCIRCUITDIAGRAM_H
