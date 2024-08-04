@@ -12,8 +12,8 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     , m_systemVoltage(0)
     , m_dischargeContactorClosed(false)
     , m_chargeContactorClosed(false)
-    , m_heaterFaultContactorClosed(false)
-    , m_isHeating(false)
+    , m_heaterFaultContactorClosed(true)
+    , m_isHeating(true)
     , m_heaterContactorClosed(false)
     , m_limitedContactorClosed(false),
     m_packColor1(Qt::gray),  // 初始化为灰色
@@ -288,14 +288,22 @@ void CircuitDiagramWidget2::drawChargeLevel(QPainter &painter, const QRect &batt
     }
     painter.drawRect(chargeRect);
 
+    QFont font = painter.font();
+    font.setPointSize(font.pointSize() * 1.5); // 调整字体大小（这里放大 1.5 倍）
+    painter.setFont(font);
     QString chargeText = QString("%1%").arg(m_chargeLevel);
     QFontMetrics fm = painter.fontMetrics();
     int textWidth = fm.horizontalAdvance(chargeText);
     int textHeight = fm.height();
     painter.setPen(Qt::black);
+
+
     painter.drawText(batteryRect.left() + (batteryRect.width() - textWidth) / 2,
                      batteryRect.top() + (batteryRect.height() + textHeight) / 2 - fm.descent(),
                      chargeText);
+    font = painter.font();
+    font.setPointSize(font.pointSize() / 1.5);
+    painter.setFont(font);
 }
 
 void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight)
@@ -455,7 +463,7 @@ void CircuitDiagramWidget2::drawHeaterFaultContactor(QPainter &painter, int x, i
     if (m_heaterFaultContactorClosed) // 假设有一个bool类型变量 m_heaterFaultContactorClosed 来表示接触器状态
     {
         // 闭合状态：竖直线
-        QPointF endPoint(x - radius, y + centerDistance);
+        QPointF endPoint(x + radius, y + centerDistance);
         line.setP1(startPoint);
         line.setP2(endPoint);
     }
@@ -567,7 +575,7 @@ void CircuitDiagramWidget2::drawHeater(QPainter &painter, int x, int y, int side
     if (m_isHeating) {
         // 绘制正方形上方的波浪线（冒烟效果）
         int smokeCount = 4;
-        int smokeHeight = 50;  // 增加波浪线高度
+        int smokeHeight = actualSide / 2;  // 增加波浪线高度
         int smokeFrequency = 20;
         int smokeWidth = actualSide / (smokeCount + 1);
 

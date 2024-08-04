@@ -51,11 +51,11 @@ void TPSecCircuitDiagram::setWarningLevel(int level) {
     }
 }
 
-int TPSecCircuitDiagram::systemVoltage() const {
+double TPSecCircuitDiagram::systemVoltage() const {
     return m_systemVoltage;
 }
 
-void TPSecCircuitDiagram::setSystemVoltage(int voltage) {
+void TPSecCircuitDiagram::setSystemVoltage(double voltage) {
     if (voltage != m_systemVoltage) {
         m_systemVoltage = voltage;
         emit systemVoltageChanged(voltage);
@@ -288,6 +288,10 @@ void TPSecCircuitDiagram::drawChargeLevel(QPainter &painter, const QRect &batter
     }
     painter.drawRect(chargeRect);
 
+    QFont font = painter.font();
+    font.setPointSize(font.pointSize() * 1.5); // 调整字体大小（这里放大 1.5 倍）
+    painter.setFont(font);
+
     QString chargeText = QString("%1%").arg(m_chargeLevel);
     QFontMetrics fm = painter.fontMetrics();
     int textWidth = fm.horizontalAdvance(chargeText);
@@ -296,6 +300,10 @@ void TPSecCircuitDiagram::drawChargeLevel(QPainter &painter, const QRect &batter
     painter.drawText(batteryRect.left() + (batteryRect.width() - textWidth) / 2,
                      batteryRect.top() + (batteryRect.height() + textHeight) / 2 - fm.descent(),
                      chargeText);
+
+    font = painter.font();
+    font.setPointSize(font.pointSize() / 1.5); // 还原字体大小
+    painter.setFont(font);
 }
 
 void TPSecCircuitDiagram::drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight)
@@ -455,7 +463,7 @@ void TPSecCircuitDiagram::drawHeaterFaultContactor(QPainter &painter, int x, int
     if (m_heaterFaultContactorClosed) // 假设有一个bool类型变量 m_heaterFaultContactorClosed 来表示接触器状态
     {
         // 闭合状态：竖直线
-        QPointF endPoint(x - radius, y + centerDistance);
+        QPointF endPoint(x + radius, y + centerDistance);
         line.setP1(startPoint);
         line.setP2(endPoint);
     }
@@ -567,7 +575,7 @@ void TPSecCircuitDiagram::drawHeater(QPainter &painter, int x, int y, int side)
     if (m_isHeating) {
         // 绘制正方形上方的波浪线（冒烟效果）
         int smokeCount = 4;
-        int smokeHeight = 50;  // 增加波浪线高度
+        int smokeHeight = actualSide / 2;  // 增加波浪线高度
         int smokeFrequency = 20;
         int smokeWidth = actualSide / (smokeCount + 1);
 
@@ -682,7 +690,7 @@ void TPSecCircuitDiagram::drawSystemVoltage(QPainter &painter, int startX, int s
     painter.drawEllipse(centerX - radius, centerY - radius, radius * 2, radius * 2);
 
     // 绘制系统电压值
-    QString voltageText = QString::number(m_systemVoltage);
+    QString voltageText = QString("%1V").arg(m_systemVoltage);
     QFontMetrics metrics(painter.font());
     int textWidth = metrics.horizontalAdvance(voltageText);
     int textHeight = metrics.height();

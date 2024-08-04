@@ -43,6 +43,32 @@ void TScale::setLevel(double level)
     }
 }
 
+double TScale::protLevelLow() const
+{
+    return m_protLevelLow;
+}
+
+void TScale::setProtLevelLow(double protLevelLow)
+{
+    if (protLevelLow < m_lowest)
+        protLevelLow = m_lowest;
+    m_protLevelLow = protLevelLow;
+    update();
+}
+
+double TScale::protLevelHigh() const
+{
+    return m_protLevelHigh;
+}
+
+void TScale::setProtLevelHigh(double protLevelHigh)
+{
+    if (protLevelHigh > m_highest)
+        protLevelHigh = m_highest;
+    m_protLevelHigh = protLevelHigh;
+    update();
+}
+
 double TScale::warnLevelLow() const
 {
     return m_warnLevelLow;
@@ -67,6 +93,20 @@ void TScale::setWarnLevelHigh(double warnLevelHigh)
         warnLevelHigh = m_highest;
     m_warnLevelHigh = warnLevelHigh;
     update();
+}
+
+double TScale::targetLevel() const
+{
+    return m_targetLevel;
+}
+
+void TScale::setTargetLevel(double targetLevel)
+{
+    if (m_targetLevel != targetLevel)
+    {
+        m_targetLevel = targetLevel;
+        update();
+    }
 }
 
 double TScale::highest() const
@@ -169,20 +209,55 @@ void TScale::paintEvent(QPaintEvent *event)
     int midLength = longLength * 2 / 5; // 中刻度线长度
     int shortLength = longLength * 1 / 5; // 短刻度线长度
 
-    double warnLowY = height() / 10.0 + (m_highest - m_warnLevelLow) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
-    double warnHighY = height() / 10.0 + (m_highest - m_warnLevelHigh) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
 
+
+    double x = width() / 10.0 + longLength / 10.0;
+    double y = height() / 10.0;
+    double w = longLength * 8.0 / 10.0;
+    //绘制保护区域(上方区域)
+    if(m_protLevelHigh < m_highest){
+        painter.setBrush(QColor(255, 0, 0, 170)); // 红色，半透明
+        double protHighY = height() / 10.0 + (m_highest - m_protLevelHigh) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+        painter.drawRect(x, y, w, protHighY - y);
+        y = protHighY;
+    }
+    //绘制告警区域(上方区域)
+    if(m_warnLevelHigh < m_protLevelHigh){
+        painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
+        double warnHighY = height() / 10.0 + (m_highest - m_warnLevelHigh) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+        painter.drawRect(x, y, w, warnHighY - y);
+        y = warnHighY;
+    }
+    //绘制安全区间
+    if(m_warnLevelLow < m_warnLevelHigh){
+        painter.setBrush(QColor(0, 255, 0, 170)); // 绿色，半透明
+        double warnLowY = height() / 10.0 + (m_highest - m_warnLevelLow) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+        painter.drawRect(x, y, w, warnLowY - y);
+        y = warnLowY;
+    }
+    //绘制告警区域(下方区域)
+    if(m_protLevelLow < m_warnLevelLow){
+        painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
+        double protLowY = height() / 10.0 + (m_highest - m_protLevelLow) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+        painter.drawRect(x, y, w, protLowY - y);
+        y = protLowY;
+    }
+    //绘制保护区间(下方区域)
+    if(m_lowest < m_protLevelLow){
+        painter.setBrush(QColor(255, 0, 0, 170)); // 红色，半透明
+        painter.drawRect(x, y, w, height() * 9.0 / 10.0 - y);
+    }
     // 绘制危险区间 (上方区域)
-    painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
-    painter.drawRect(width() / 10.0 + longLength / 10.0, height() / 10.0, longLength * 8.0 / 10.0, warnHighY - height() / 10.0);
+    // painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
+    // painter.drawRect(width() / 10.0 + longLength / 10.0, height() / 10.0, longLength * 8.0 / 10.0, warnHighY - height() / 10.0);
 
-    // 绘制安全区间
-    painter.setBrush(QColor(0, 255, 0, 170)); // 绿色，半透明
-    painter.drawRect(width() / 10.0 + longLength / 10.0, warnHighY, longLength * 8.0 / 10.0, warnLowY - warnHighY);
+    // // 绘制安全区间
+    // painter.setBrush(QColor(0, 255, 0, 170)); // 绿色，半透明
+    // painter.drawRect(width() / 10.0 + longLength / 10.0, warnHighY, longLength * 8.0 / 10.0, warnLowY - warnHighY);
 
-    // 绘制危险区间 (下方区域)
-    painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
-    painter.drawRect(width() / 10.0 + longLength / 10.0, warnLowY, longLength * 8.0 / 10.0, height() * 9.0 / 10.0 - warnLowY);
+    // // 绘制危险区间 (下方区域)
+    // painter.setBrush(QColor(255, 165, 0, 170)); // 橙色，半透明
+    // painter.drawRect(width() / 10.0 + longLength / 10.0, warnLowY, longLength * 8.0 / 10.0, height() * 9.0 / 10.0 - warnLowY);
 
     // 绘制刻度线中心的黑色线段
     // pen.setColor(Qt::black);
@@ -239,4 +314,10 @@ void TScale::paintEvent(QPaintEvent *event)
     arrow << QPoint(width()/10, currentY) << QPoint(width()/20, currentY - 5) << QPoint(width()/20, currentY + 5);
     painter.setBrush(Qt::red);
     painter.drawPolygon(arrow);
+
+    if(m_targetLevel >= m_lowest){
+        //绘制目标值
+        double targetY = height() / 10.0 + (m_highest - 240) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+        painter.drawLine(width() / 10.0 + longLength / 2.0 - midLength / 2.0, targetY, width() / 10.0 + longLength / 2.0 + midLength / 2.0, targetY);
+    }
 }
