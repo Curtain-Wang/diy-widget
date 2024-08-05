@@ -329,7 +329,7 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     int verticalLineLength = batteryHeight / 4;
 
     // 主接触器的位置 (相对电池)
-    int horizontalLineLength = width() / 4; // 连接到主接触器的水平线长度
+    int horizontalLineLength = width() / 3; // 连接到主接触器的水平线长度
     int contactorRadius = 4;
     int centerDistance = batteryWidth / 4; // 主接触器两个圆心之间的距离
 
@@ -402,7 +402,7 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
     int startY = mainContactorY;
 
     // 计算水平线的终点位置
-    int horizontalLineLength = width() / 3;
+    int horizontalLineLength = width() / 4;
     int endX = startX - horizontalLineLength;
 
     // 绘制水平线
@@ -430,7 +430,7 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
     painter.setPen(pen);
 
     // 水平线的起点是主接触器左侧圆弧
-    int startX = mainContactorX - width() * 13 / 48;
+    int startX = mainContactorX - width() * 13 / 48 + width() / 12;
     int startY = mainContactorY;
 
     // 绘制垂直线
@@ -711,7 +711,7 @@ void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int 
     int verticalEndY = startY + height() / 3;
 
     // 水平线的终点
-    int horizontalEndX = startX + width() / 3;
+    int horizontalEndX = startX + width() / 4;
 
     // 绘制从系统电压下方圆弧垂直向下的线
     painter.drawLine(startX, startY, startX, verticalEndY);
@@ -764,7 +764,7 @@ void CircuitDiagramWidget2::drawDischargeContactor(QPainter &painter, int x, int
 
     //绘制连接limited接触器的电线
     int startX = x + centerDistance + radius;
-    drawWireToLimitedContactor(painter, startX, y, startX + width() / 20);
+    drawWireToLimitedContactor(painter, startX, y, startX + width() / 10);
 }
 
 void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX)
@@ -833,10 +833,10 @@ void CircuitDiagramWidget2::drawLimitedContactor(QPainter &painter, int x, int y
 
     //绘制水平向右的线
     int startX = x + centerDistance + radius;
-    painter.drawLine(startX, y, startX + width() / 40, y);
+    painter.drawLine(startX, y, startX + width() / 20, y);
 
     //绘制垂直向下的线
-    startX = startX + width() / 40;
+    startX = startX + width() / 20;
     painter.drawLine(startX, y, startX, y + height() / 6);
 }
 
@@ -849,7 +849,7 @@ void CircuitDiagramWidget2::drawWireToChargeContactor(QPainter &painter, int sta
     painter.setPen(pen);
 
     // 水平线长度为画布宽度的1/20
-    int horizontalLineLength = width() / 20;
+    int horizontalLineLength = width() / 10;
 
     // 计算水平线的终点坐标
     int horizontalLineEndX = startX + horizontalLineLength;
