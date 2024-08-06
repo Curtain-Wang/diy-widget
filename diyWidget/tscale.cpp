@@ -1,4 +1,4 @@
-#include "TScale.h"
+#include "tscale.h"
 #include <QResizeEvent>
 
 TScale::TScale(QWidget *parent)
@@ -6,8 +6,9 @@ TScale::TScale(QWidget *parent)
 {
     updateLabels();
     setMinimumSize(100, 200); // 设置最小尺寸，宽高比为1:2
- // 设置最小尺寸，宽高比为1:2
+    // 设置最小尺寸，宽高比为1:2
     checkWarnLevel();
+    update();
 }
 
 void TScale::checkWarnLevel()
@@ -315,9 +316,9 @@ void TScale::paintEvent(QPaintEvent *event)
     painter.setBrush(Qt::red);
     painter.drawPolygon(arrow);
 
-    if(m_targetLevel >= m_lowest){
+    if(m_targetLevel > m_lowest){
         //绘制目标值
-        double targetY = height() / 10.0 + (m_highest - 240) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
+        double targetY = height() / 10.0 + (m_highest - m_targetLevel) * height() * 8.0 / 10.0 / (m_highest - m_lowest);
         painter.drawLine(width() / 10.0 + longLength / 2.0 - midLength / 2.0, targetY, width() / 10.0 + longLength / 2.0 + midLength / 2.0, targetY);
     }
 }

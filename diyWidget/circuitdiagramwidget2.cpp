@@ -12,8 +12,8 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     , m_systemVoltage(0)
     , m_dischargeContactorClosed(false)
     , m_chargeContactorClosed(false)
-    , m_heaterFaultContactorClosed(true)
-    , m_isHeating(true)
+    , m_heaterFaultContactorClosed(false)
+    , m_isHeating(false)
     , m_heaterContactorClosed(false)
     , m_limitedContactorClosed(false),
     m_packColor1(Qt::gray),  // 初始化为灰色
@@ -51,11 +51,11 @@ void CircuitDiagramWidget2::setWarningLevel(int level) {
     }
 }
 
-int CircuitDiagramWidget2::systemVoltage() const {
+double CircuitDiagramWidget2::systemVoltage() const {
     return m_systemVoltage;
 }
 
-void CircuitDiagramWidget2::setSystemVoltage(int voltage) {
+void CircuitDiagramWidget2::setSystemVoltage(double voltage) {
     if (voltage != m_systemVoltage) {
         m_systemVoltage = voltage;
         emit systemVoltageChanged(voltage);
@@ -291,18 +291,18 @@ void CircuitDiagramWidget2::drawChargeLevel(QPainter &painter, const QRect &batt
     QFont font = painter.font();
     font.setPointSize(font.pointSize() * 1.5); // 调整字体大小（这里放大 1.5 倍）
     painter.setFont(font);
+
     QString chargeText = QString("%1%").arg(m_chargeLevel);
     QFontMetrics fm = painter.fontMetrics();
     int textWidth = fm.horizontalAdvance(chargeText);
     int textHeight = fm.height();
     painter.setPen(Qt::black);
-
-
     painter.drawText(batteryRect.left() + (batteryRect.width() - textWidth) / 2,
                      batteryRect.top() + (batteryRect.height() + textHeight) / 2 - fm.descent(),
                      chargeText);
+
     font = painter.font();
-    font.setPointSize(font.pointSize() / 1.5);
+    font.setPointSize(font.pointSize() / 1.5); // 还原字体大小
     painter.setFont(font);
 }
 
@@ -329,7 +329,7 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     int verticalLineLength = batteryHeight / 4;
 
     // 主接触器的位置 (相对电池)
-    int horizontalLineLength = width() / 4; // 连接到主接触器的水平线长度
+    int horizontalLineLength = width() / 3; // 连接到主接触器的水平线长度
     int contactorRadius = 4;
     int centerDistance = batteryWidth / 4; // 主接触器两个圆心之间的距离
 
@@ -402,7 +402,7 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
     int startY = mainContactorY;
 
     // 计算水平线的终点位置
-    int horizontalLineLength = width() / 3;
+    int horizontalLineLength = width() / 4;
     int endX = startX - horizontalLineLength;
 
     // 绘制水平线
@@ -430,7 +430,7 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
     painter.setPen(pen);
 
     // 水平线的起点是主接触器左侧圆弧
-    int startX = mainContactorX - width() * 13 / 48;
+    int startX = mainContactorX - width() * 13 / 48 + width() / 12;
     int startY = mainContactorY;
 
     // 绘制垂直线
@@ -690,7 +690,7 @@ void CircuitDiagramWidget2::drawSystemVoltage(QPainter &painter, int startX, int
     painter.drawEllipse(centerX - radius, centerY - radius, radius * 2, radius * 2);
 
     // 绘制系统电压值
-    QString voltageText = QString::number(m_systemVoltage);
+    QString voltageText = QString("%1V").arg(m_systemVoltage);
     QFontMetrics metrics(painter.font());
     int textWidth = metrics.horizontalAdvance(voltageText);
     int textHeight = metrics.height();
@@ -711,7 +711,7 @@ void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int 
     int verticalEndY = startY + height() / 3;
 
     // 水平线的终点
-    int horizontalEndX = startX + width() / 3;
+    int horizontalEndX = startX + width() / 4;
 
     // 绘制从系统电压下方圆弧垂直向下的线
     painter.drawLine(startX, startY, startX, verticalEndY);
@@ -764,7 +764,7 @@ void CircuitDiagramWidget2::drawDischargeContactor(QPainter &painter, int x, int
 
     //绘制连接limited接触器的电线
     int startX = x + centerDistance + radius;
-    drawWireToLimitedContactor(painter, startX, y, startX + width() / 20);
+    drawWireToLimitedContactor(painter, startX, y, startX + width() / 10);
 }
 
 void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX)
@@ -833,10 +833,10 @@ void CircuitDiagramWidget2::drawLimitedContactor(QPainter &painter, int x, int y
 
     //绘制水平向右的线
     int startX = x + centerDistance + radius;
-    painter.drawLine(startX, y, startX + width() / 40, y);
+    painter.drawLine(startX, y, startX + width() / 20, y);
 
     //绘制垂直向下的线
-    startX = startX + width() / 40;
+    startX = startX + width() / 20;
     painter.drawLine(startX, y, startX, y + height() / 6);
 }
 
@@ -849,7 +849,7 @@ void CircuitDiagramWidget2::drawWireToChargeContactor(QPainter &painter, int sta
     painter.setPen(pen);
 
     // 水平线长度为画布宽度的1/20
-    int horizontalLineLength = width() / 20;
+    int horizontalLineLength = width() / 10;
 
     // 计算水平线的终点坐标
     int horizontalLineEndX = startX + horizontalLineLength;
@@ -1030,7 +1030,6 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
         // 绘制方框
         painter.drawRect(rectX, rectY, rectWidth, rectHeight);
     }
-
 }
 
 void CircuitDiagramWidget2::resizeEvent(QResizeEvent *event)
@@ -1046,13 +1045,42 @@ void CircuitDiagramWidget2::resizeEvent(QResizeEvent *event)
     int newHeightBasedOnWidth = static_cast<int>(currentWidth / aspectRatio);
     int newWidthBasedOnHeight = static_cast<int>(currentHeight * aspectRatio);
 
-    // 根据最小差值选择调整方式
+    int finalWidth, finalHeight;
+
+    // 根据最小差值选择调整方式并计算最终的尺寸
     if (abs(newHeightBasedOnWidth - currentHeight) < abs(newWidthBasedOnHeight - currentWidth)) {
-        // 根据宽度调整高度
-        resize(currentWidth, newHeightBasedOnWidth);
+        finalWidth = currentWidth;
+        finalHeight = newHeightBasedOnWidth;
     } else {
-        // 根据高度调整宽度
-        resize(newWidthBasedOnHeight, currentHeight);
+        finalWidth = newWidthBasedOnHeight;
+        finalHeight = currentHeight;
     }
+
+    // 获取最小和最大尺寸
+    QSize minSize = minimumSize();
+    QSize maxSize = maximumSize();
+
+    // 调整最终尺寸以确保不超出最大和最小尺寸限制
+    if (finalWidth < minSize.width()) {
+        finalWidth = minSize.width();
+        finalHeight = static_cast<int>(finalWidth / aspectRatio);
+    }
+    if (finalHeight < minSize.height()) {
+        finalHeight = minSize.height();
+        finalWidth = static_cast<int>(finalHeight * aspectRatio);
+    }
+
+    if (finalWidth > maxSize.width()) {
+        finalWidth = maxSize.width();
+        finalHeight = static_cast<int>(finalWidth / aspectRatio);
+    }
+    if (finalHeight > maxSize.height()) {
+        finalHeight = maxSize.height();
+        finalWidth = static_cast<int>(finalHeight * aspectRatio);
+    }
+
+    // 应用最终尺寸
+    resize(finalWidth, finalHeight);
+
     QWidget::resizeEvent(event);
 }

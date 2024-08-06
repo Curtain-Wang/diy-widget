@@ -1,14 +1,11 @@
 #include "heater.h"
 #include <QPainter>
 #include <QPainterPath>
-#include <cmath>
 
-Heater::Heater(QWidget *parent)
-    : QWidget{parent}
+Heater::Heater(QWidget *parent) :
+    QWidget(parent)
 {
-
 }
-
 void Heater::setHeating(bool heating)
 {
     if (m_isHeating != heating) {
@@ -85,7 +82,7 @@ void Heater::paintEvent(QPaintEvent *event)
     if (m_isHeating) {
         // 绘制正方形上方的波浪线（冒烟效果）
         int smokeCount = 4;
-        int smokeHeight = 50;  // 增加波浪线高度
+        int smokeHeight = side / 2;  // 增加波浪线高度
         int smokeFrequency = 20;
         int smokeWidth = side / (smokeCount + 1);
 

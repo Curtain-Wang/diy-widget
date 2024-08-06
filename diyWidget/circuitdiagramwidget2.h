@@ -9,7 +9,7 @@ class CircuitDiagramWidget2 : public QWidget
 
     Q_PROPERTY(int chargeLevel READ chargeLevel WRITE setChargeLevel NOTIFY chargeLevelChanged)
     Q_PROPERTY(int warningLevel READ warningLevel WRITE setWarningLevel NOTIFY warningLevelChanged)
-    Q_PROPERTY(int systemVoltage READ systemVoltage WRITE setSystemVoltage NOTIFY systemVoltageChanged)
+    Q_PROPERTY(double systemVoltage READ systemVoltage WRITE setSystemVoltage NOTIFY systemVoltageChanged)
     Q_PROPERTY(bool mainContactorClosed READ mainContactorClosed WRITE setMainContactorClosed NOTIFY mainContactorClosedChanged)
     Q_PROPERTY(bool dischargeContactorClosed READ dischargeContactorClosed WRITE setDischargeContactorClosed NOTIFY dischargeContactorClosedChanged)
     Q_PROPERTY(bool chargeContactorClosed READ chargeContactorClosed WRITE setChargeContactorClosed NOTIFY chargeContactorClosedChanged)
@@ -34,8 +34,8 @@ public:
     int warningLevel() const;
     void setWarningLevel(int level);
 
-    int systemVoltage() const;
-    void setSystemVoltage(int voltage);
+    double systemVoltage() const;
+    void setSystemVoltage(double voltage);
 
     bool mainContactorClosed() const;
     void setMainContactorClosed(bool closed);
@@ -103,7 +103,6 @@ public:
     void drawHeaterContactor(QPainter &painter, int x, int y);
     void drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX);
     void drawLimitedContactor(QPainter &painter, int x, int y);
-
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -129,7 +128,7 @@ protected:
 private:
     int m_chargeLevel;
     int m_warningLevel;
-    int m_systemVoltage;
+    double m_systemVoltage;
     bool m_mainContactorClosed;
     bool m_dischargeContactorClosed;
     bool m_chargeContactorClosed;
