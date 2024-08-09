@@ -959,7 +959,7 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
     // 动态调整字体大小
     QFont font = painter.font();
     font.setPointSize(width() / 60);
-    font.setFamily("Times New Roman"); // 设置字体样式
+    font.setFamilies({"Arial", "Microsoft YaHei UI"});
     painter.setFont(font);
 
     // 计算电池的宽度和高度，使其充满画布并保持2:1的比例
