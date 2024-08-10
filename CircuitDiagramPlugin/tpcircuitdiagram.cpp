@@ -2,7 +2,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QBrush>
-#include <QPainterPath>s
+#include <QPainterPath>
 
 
 TPCircuitDiagram::TPCircuitDiagram(QWidget *parent)
