@@ -17,9 +17,9 @@
    <widget class="CircuitDiagramWidget2" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>90</y>
-      <width>746</width>
+      <x>70</x>
+      <y>100</y>
+      <width>747</width>
       <height>305</height>
      </rect>
     </property>
@@ -31,7 +31,7 @@
      <x>0</x>
      <y>0</y>
      <width>924</width>
-     <height>20</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>

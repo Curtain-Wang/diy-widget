@@ -329,11 +329,12 @@ void TPSecCircuitDiagram::drawWireToMainContactor(QPainter &painter, int battery
     int verticalLineLength = batteryHeight / 4;
 
     // 主接触器的位置 (相对电池)
-    int horizontalLineLength = width() / 3; // 连接到主接触器的水平线长度
+    int horizontalLineLength = width() / 4 - width() / 24; // 连接到主接触器的水平线长度
     int contactorRadius = 4;
     int centerDistance = batteryWidth / 4; // 主接触器两个圆心之间的距离
 
     int mainContactorX = batteryPosX - horizontalLineLength - centerDistance; // 向左延伸以连接到右侧圆的圆弧
+    mianContactorStartX = mainContactorX;
     int mainContactorY = batteryPosY - verticalLineLength;
 
     // 绘制从电池正极到主接触器的线
@@ -402,7 +403,7 @@ void TPSecCircuitDiagram::drawWireToSystemVoltage(QPainter &painter, int mainCon
     int startY = mainContactorY;
 
     // 计算水平线的终点位置
-    int horizontalLineLength = width() / 4;
+    int horizontalLineLength = width() / 3 - width() / 30;
     int endX = startX - horizontalLineLength;
 
     // 绘制水平线
@@ -430,7 +431,7 @@ void TPSecCircuitDiagram::drawWireToHeaterFaultContactor(QPainter &painter, int 
     painter.setPen(pen);
 
     // 水平线的起点是主接触器左侧圆弧
-    int startX = mainContactorX - width() * 13 / 48 + width() / 12;
+    int startX = mainContactorX - width() * 13 / 48 + width() / 12 - width() / 48;
     int startY = mainContactorY;
 
     // 绘制垂直线
@@ -711,7 +712,7 @@ void TPSecCircuitDiagram::drawWireToDischargeContactor(QPainter &painter, int st
     int verticalEndY = startY + height() / 3;
 
     // 水平线的终点
-    int horizontalEndX = startX + width() / 4;
+    int horizontalEndX = mianContactorStartX;
 
     // 绘制从系统电压下方圆弧垂直向下的线
     painter.drawLine(startX, startY, startX, verticalEndY);
@@ -764,7 +765,7 @@ void TPSecCircuitDiagram::drawDischargeContactor(QPainter &painter, int x, int y
 
     //绘制连接limited接触器的电线
     int startX = x + centerDistance + radius;
-    drawWireToLimitedContactor(painter, startX, y, startX + width() / 10);
+    drawWireToLimitedContactor(painter, startX, y, startX + width() / 8 + width() / 24);
 }
 
 void TPSecCircuitDiagram::drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX)
@@ -833,10 +834,10 @@ void TPSecCircuitDiagram::drawLimitedContactor(QPainter &painter, int x, int y)
 
     //绘制水平向右的线
     int startX = x + centerDistance + radius;
-    painter.drawLine(startX, y, startX + width() / 20, y);
+    painter.drawLine(startX, y, startX + width() / 16 + width() / 48, y);
 
     //绘制垂直向下的线
-    startX = startX + width() / 20;
+    startX = startX + width() / 16 + width() / 48;
     painter.drawLine(startX, y, startX, y + height() / 6);
 }
 
@@ -849,7 +850,7 @@ void TPSecCircuitDiagram::drawWireToChargeContactor(QPainter &painter, int start
     painter.setPen(pen);
 
     // 水平线长度为画布宽度的1/20
-    int horizontalLineLength = width() / 10;
+    int horizontalLineLength = width() / 8 + width() / 24;
 
     // 计算水平线的终点坐标
     int horizontalLineEndX = startX + horizontalLineLength;
@@ -930,7 +931,7 @@ void TPSecCircuitDiagram::drawWireFromNegativeElectrode(QPainter &painter, int b
     painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
 
     // 水平向右的部分，长度为画布宽度的1/20
-    int horizontalLineLength = width() / 20;
+    int horizontalLineLength = width() / 10;
     int horizontalEndX = batteryNegPosX + horizontalLineLength;
     painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
 
@@ -949,12 +950,12 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    offsetX = -width() * 1 / 28;
+    offsetX = -width() * 1 / 10;
     // 绘制画布边框
     QPen borderPen(Qt::black); // 边框线条颜色
     borderPen.setWidth(2);
     painter.setPen(borderPen);
-    // painter.drawRect(0, 0, width() - 1, height() - 1); // 绘制画布的黑色边框
+    //painter.drawRect(0, 0, width() - 1, height() - 1); // 绘制画布的黑色边框
 
     // 动态调整字体大小
     QFont font = painter.font();
@@ -1001,7 +1002,7 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
 
     // 绘制右侧的“串电压”和方框
     painter.setPen(Qt::black);
-    int textX = batteryRect.right() + width() / 20; // "串电压" 文字的X位置
+    int textX = batteryRect.right() + width() / 15 + width() / 20; // "串电压" 文字的X位置
     int textY = batteryRect.top() - height() / 10; // "串电压" 文字的Y位置
     font.setPointSize(width() / 50);
     painter.setFont(font);
@@ -1021,11 +1022,11 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
     for (int i = 1; i <= 6; ++i) {
         painter.setPen(Qt::black);
         painter.setBrush(colors[i - 1]);
-        int rectX = textX + 10; // 方框的X位置
+        int rectX = textX + rectWidth / 5; // 方框的X位置
         int rectY = textY + rectSpacing * 2 + (i - 1) * (rectHeight + rectSpacing); // 方框的Y位置
 
         // 绘制序号
-        painter.drawText(rectX - 20, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
+        painter.drawText(rectX - rectWidth / 2, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
 
         // 绘制方框
         painter.drawRect(rectX, rectY, rectWidth, rectHeight);

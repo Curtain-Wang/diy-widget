@@ -148,6 +148,7 @@ private:
 private:
     int chargeContactorEndx;
     int offsetX;
+    double mianContactorStartX;
 
     // QWidget interface
 protected:
