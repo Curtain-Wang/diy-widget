@@ -25,6 +25,7 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     m_language(2) //默认中文
 {
     setMinimumSize(200, 140);
+    startTimer(50);
 }
 
 int CircuitDiagramWidget2::chargeLevel() const {
@@ -312,9 +313,8 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     painter.setViewport(0, 0, width(), height());
     painter.setWindow(0, 0, width(), height());
 
-    QPen pen(Qt::red); // 导线颜色
-    pen.setWidth(2);
-    painter.setPen(pen);
+    int penWidth = 5;
+    int energyBlockWidth = 20; // 能量块的宽度
 
     // 电池左侧电极的坐标
     int electrodeWidth = batteryWidth / 10;
@@ -330,16 +330,78 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
 
     // 主接触器的位置 (相对电池)
     int horizontalLineLength = width() / 4 - width() / 24; // 连接到主接触器的水平线长度
-    int contactorRadius = 4;
     int centerDistance = batteryWidth / 4; // 主接触器两个圆心之间的距离
 
     int mainContactorX = batteryPosX - horizontalLineLength - centerDistance; // 向左延伸以连接到右侧圆的圆弧
     mianContactorStartX = mainContactorX;
     int mainContactorY = batteryPosY - verticalLineLength;
 
-    // 绘制从电池正极到主接触器的线
-    painter.drawLine(batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength); // 垂直线
-    painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength); // 水平线，连接到右侧圆的中心
+    // 判断并绘制从电池正极到主接触器的线
+    QPen pen(Qt::red);
+    pen.setWidth(penWidth);
+    painter.setPen(pen);
+
+    if (m_energyFlowPosition <= verticalLineLength) {
+        // 绘制垂直部分电线
+        if (m_energyFlowPosition > 0) {
+            // 绘制能量块之前的电线部分
+            painter.drawLine(batteryPosX, batteryPosY, batteryPosX, batteryPosY - m_energyFlowPosition);
+        }
+
+        if (m_energyFlowPosition + energyBlockWidth <= verticalLineLength) {
+            // 绘制能量块完全在垂直部分
+            pen.setColor(QColor(255, 50, 50, 180)); // 亮红色，带有透明度
+            painter.setPen(pen);
+            painter.drawLine(batteryPosX, batteryPosY - m_energyFlowPosition, batteryPosX, batteryPosY - m_energyFlowPosition - energyBlockWidth);
+
+            // 绘制能量块之后的垂直部分电线
+            pen.setColor(Qt::red); // 恢复原始颜色
+            painter.setPen(pen);
+            painter.drawLine(batteryPosX, batteryPosY - m_energyFlowPosition - energyBlockWidth, batteryPosX, batteryPosY - verticalLineLength);
+
+            // 绘制水平部分电线
+            painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength);
+
+        } else {
+            // 能量块部分在垂直部分，部分在水平部分
+            int remainingLength = verticalLineLength - m_energyFlowPosition;
+
+            // 绘制能量块在垂直部分的部分
+            pen.setColor(QColor(255, 50, 50, 180)); // 亮红色，带有透明度
+            painter.setPen(pen);
+            painter.drawLine(batteryPosX, batteryPosY - m_energyFlowPosition, batteryPosX, batteryPosY - verticalLineLength);
+
+            // 绘制能量块在水平部分的部分
+            painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - (energyBlockWidth - remainingLength), batteryPosY - verticalLineLength);
+
+            // 绘制能量块之后的水平部分电线
+            pen.setColor(Qt::red); // 恢复原始颜色
+            painter.setPen(pen);
+            painter.drawLine(batteryPosX - (energyBlockWidth - remainingLength), batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength);
+        }
+
+    } else {
+        // 绘制垂直部分电线（能量块已经通过此段）
+        painter.drawLine(batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength);
+
+        // 水平部分电线的绘制
+        int horizontalPosition = m_energyFlowPosition - verticalLineLength;
+
+        if (horizontalPosition > 0) {
+            // 绘制能量块之前的电线部分
+            painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - horizontalPosition, batteryPosY - verticalLineLength);
+        }
+
+        // 绘制能量块对应的电线部分
+        pen.setColor(QColor(255, 50, 50, 80)); // 亮红色，带有透明度
+        painter.setPen(pen);
+        painter.drawLine(batteryPosX - horizontalPosition, batteryPosY - verticalLineLength, batteryPosX - horizontalPosition - energyBlockWidth, batteryPosY - verticalLineLength);
+
+        // 绘制能量块之后的水平部分电线
+        pen.setColor(Qt::red); // 恢复原始颜色
+        painter.setPen(pen);
+        painter.drawLine(batteryPosX - horizontalPosition - energyBlockWidth, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength);
+    }
 
     // 绘制主接触器
     drawMainContactor(painter, mainContactorX, mainContactorY, batteryWidth);
@@ -350,6 +412,18 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
 
 
 
+
+
+
+void CircuitDiagramWidget2::timerEvent(QTimerEvent *event)
+{
+    m_energyFlowPosition += 5; // 调整速度
+    int totalLength = width() / 4 - width() / 24 + width() / 40;
+    if (m_energyFlowPosition + 20 > totalLength) {
+        m_energyFlowPosition = 0; // 循环能量块的位置
+    }
+    update(); // 重新绘制界面
+}
 
 void CircuitDiagramWidget2::drawMainContactor(QPainter &painter, int x, int y, int batteryWidth)
 {

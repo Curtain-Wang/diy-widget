@@ -125,6 +125,7 @@ signals:
 protected:
     void paintEvent(QPaintEvent *event) override;
 
+
 private:
     int m_chargeLevel;
     int m_warningLevel;
@@ -148,10 +149,14 @@ private:
     int chargeContactorEndx;
     int offsetX;
     double mianContactorStartX;
-
+    int m_energyFlowPosition = 0;
     // QWidget interface
 protected:
     void resizeEvent(QResizeEvent *event);
+
+    // QObject interface
+protected:
+    virtual void timerEvent(QTimerEvent *event) override;
 };
 
 #endif // CIRCUITDIAGRAMWIDGET2_H
