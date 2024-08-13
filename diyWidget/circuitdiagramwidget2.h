@@ -2,7 +2,6 @@
 #define CIRCUITDIAGRAMWIDGET2_H
 
 #include <QWidget>
-
 class CircuitDiagramWidget2 : public QWidget
 {
     Q_OBJECT
@@ -150,6 +149,8 @@ private:
     int offsetX;
     double mianContactorStartX;
     int m_energyFlowPosition = 0;
+    Qt::GlobalColor energyColor;
+    int energyBlockWidth = 20; // 能量块的宽度
     // QWidget interface
 protected:
     void resizeEvent(QResizeEvent *event);
