@@ -2,6 +2,7 @@
 #define CIRCUITDIAGRAMWIDGET2_H
 
 #include <QWidget>
+class QTimer;
 class CircuitDiagramWidget2 : public QWidget
 {
     Q_OBJECT
@@ -102,6 +103,14 @@ public:
     void drawHeaterContactor(QPainter &painter, int x, int y);
     void drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX);
     void drawLimitedContactor(QPainter &painter, int x, int y);
+    //绘制渐变直线线段
+    void drawGradientLineSegment(int x1, int y1, int x2, int y2, Qt::GlobalColor edgeColor, QPainter &painter, double color2At = 0.5);
+    //绘制渐变折线线段
+    void drawGradientPolylineSegment(int x1, int y1, int x2, int y2, int x3, int y3, Qt::GlobalColor edgeColor, QPainter &painter);
+    //是否形成一个闭合回路
+    bool ifCloseLoop();
+    //定时器和能量块调整
+    void timerAndEnergyAdjust();
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -121,6 +130,8 @@ signals:
     void packColor6Changed(const QColor &color);
     void languageChanged(quint8 language);
 
+private slots:
+    void on_timer_timeout();
 protected:
     void paintEvent(QPaintEvent *event) override;
 
@@ -148,16 +159,15 @@ private:
     int chargeContactorEndx;
     int offsetX;
     double mianContactorStartX;
+    double horizontalEndX;
     int m_energyFlowPosition = 0;
     Qt::GlobalColor energyColor;
     int energyBlockWidth = 20; // 能量块的宽度
     // QWidget interface
+    QTimer* timer;
+    int counter = 0;
 protected:
     void resizeEvent(QResizeEvent *event);
-
-    // QObject interface
-protected:
-    virtual void timerEvent(QTimerEvent *event) override;
 };
 
 #endif // CIRCUITDIAGRAMWIDGET2_H

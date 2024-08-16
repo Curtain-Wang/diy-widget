@@ -5,17 +5,18 @@
 #include <QLinearGradient>
 #include  <QPainterPath>
 #include <QResizeEvent>
-
+#include <QTimer>
 CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
-    , m_mainContactorClosed(false)
+    , timer(new QTimer(this))
+    , m_mainContactorClosed(true)
     , m_systemVoltage(0)
-    , m_dischargeContactorClosed(false)
+    , m_dischargeContactorClosed(true)
     , m_chargeContactorClosed(false)
-    , m_heaterFaultContactorClosed(false)
-    , m_isHeating(false)
-    , m_heaterContactorClosed(false)
-    , m_limitedContactorClosed(false),
+    , m_heaterFaultContactorClosed(true)
+    , m_isHeating(true)
+    , m_heaterContactorClosed(true)
+    , m_limitedContactorClosed(true),
     m_packColor1(Qt::gray),  // 初始化为灰色
     m_packColor2(Qt::gray),  // 初始化为灰色
     m_packColor3(Qt::gray),  // 初始化为灰色
@@ -26,7 +27,13 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
 {
     energyColor = Qt::white;
     setMinimumSize(200, 140);
-    startTimer(50);
+    timer->setInterval(50);
+    connect(timer, &QTimer::timeout, this, &CircuitDiagramWidget2::on_timer_timeout);
+    //有闭合回路才开启定时器
+    if(ifCloseLoop())
+    {
+        timer->start();
+    }
 }
 
 int CircuitDiagramWidget2::chargeLevel() const {
@@ -86,6 +93,7 @@ void CircuitDiagramWidget2::setDischargeContactorClosed(bool closed) {
         m_dischargeContactorClosed = closed;
         emit dischargeContactorClosedChanged(closed);
         update();
+        timerAndEnergyAdjust();
     }
 }
 
@@ -98,6 +106,7 @@ void CircuitDiagramWidget2::setChargeContactorClosed(bool closed) {
         m_chargeContactorClosed = closed;
         emit chargeContactorClosedChanged(closed);
         update();
+        timerAndEnergyAdjust();
     }
 }
 
@@ -146,6 +155,7 @@ void CircuitDiagramWidget2::setLimitedContactorClosed(bool closed) {
         m_limitedContactorClosed = closed;
         emit limitedContactorClosedChanged(closed);
         update();
+        timerAndEnergyAdjust();
     }
 }
 
@@ -358,18 +368,10 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
         }
         if (m_energyFlowPosition + energyBlockWidth <= verticalLineLength) {
             // 绘制能量块完全在垂直部分
-            QLinearGradient gradient(batteryPosX, batteryPosY - m_energyFlowPosition - energyBlockWidth,
-                                     batteryPosX, batteryPosY - m_energyFlowPosition);
-            gradient.setColorAt(0, Qt::red);
-            gradient.setColorAt(0.5, energyColor); // 中间为白色
-            gradient.setColorAt(1, Qt::red);
-            pen.setBrush(gradient);
-            painter.setPen(pen);
-            painter.drawLine(batteryPosX, batteryPosY - m_energyFlowPosition, batteryPosX, batteryPosY - m_energyFlowPosition - energyBlockWidth);
+            drawGradientLineSegment(batteryPosX, batteryPosY - m_energyFlowPosition - energyBlockWidth,
+                                    batteryPosX, batteryPosY - m_energyFlowPosition, Qt::red, painter);
 
             // 绘制能量块之后的垂直部分电线
-            pen.setColor(Qt::red); // 恢复原始颜色
-            painter.setPen(pen);
             painter.drawLine(batteryPosX, batteryPosY - m_energyFlowPosition - energyBlockWidth, batteryPosX, batteryPosY - verticalLineLength);
 
             // 绘制水平部分电线
@@ -380,24 +382,10 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
             int remainingLength = verticalLineLength - m_energyFlowPosition;
 
             // 计算渐变起点和终点，跨越垂直和水平部分
-            QLinearGradient gradient(batteryPosX, batteryPosY - m_energyFlowPosition,
-                                     batteryPosX - (energyBlockWidth - remainingLength), batteryPosY - verticalLineLength);
-            gradient.setColorAt(0, Qt::red);
-            gradient.setColorAt(0.5, energyColor);
-            gradient.setColorAt(1, Qt::red);
-            pen.setBrush(gradient);
-            painter.setPen(pen);
-
-            // 绘制能量块在垂直部分和水平部分的电线
-            QPainterPath path;
-            path.moveTo(batteryPosX, batteryPosY - m_energyFlowPosition);
-            path.lineTo(batteryPosX, batteryPosY - verticalLineLength);
-            path.lineTo(batteryPosX - (energyBlockWidth - remainingLength), batteryPosY - verticalLineLength);
-            painter.drawPath(path);
-
+            drawGradientPolylineSegment(batteryPosX, batteryPosY - m_energyFlowPosition, batteryPosX, batteryPosY - verticalLineLength
+                                        ,batteryPosX - (energyBlockWidth - remainingLength), batteryPosY - verticalLineLength
+                                        ,Qt::red, painter);
             // 绘制能量块之后的水平部分电线
-            pen.setColor(Qt::red); // 恢复原始颜色
-            painter.setPen(pen);
             painter.drawLine(batteryPosX - (energyBlockWidth - remainingLength), batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength);
         }
 
@@ -414,17 +402,10 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
         }
 
         // 绘制能量块对应的电线部分
-        QLinearGradient gradient(batteryPosX - horizontalPosition, batteryPosY - verticalLineLength,
-                                 batteryPosX - horizontalPosition - energyBlockWidth, batteryPosY - verticalLineLength);
-        gradient.setColorAt(0, Qt::red);
-        gradient.setColorAt(0.5, energyColor);
-        gradient.setColorAt(1, Qt::red);
-        pen.setBrush(gradient);
-        painter.setPen(pen);
-        painter.drawLine(batteryPosX - horizontalPosition, batteryPosY - verticalLineLength, batteryPosX - horizontalPosition - energyBlockWidth, batteryPosY - verticalLineLength);
-
+        drawGradientLineSegment(batteryPosX - horizontalPosition, batteryPosY - verticalLineLength,
+                                batteryPosX - horizontalPosition - energyBlockWidth, batteryPosY - verticalLineLength,
+                                Qt::red, painter);
         // 绘制能量块之后的水平部分电线
-        pen.setColor(Qt::red); // 恢复原始颜色
         painter.setPen(pen);
         painter.drawLine(batteryPosX - horizontalPosition - energyBlockWidth, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength);
     }else{
@@ -444,11 +425,16 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
 }
 
 
-void CircuitDiagramWidget2::timerEvent(QTimerEvent *event)
+void CircuitDiagramWidget2::on_timer_timeout()
 {
     m_energyFlowPosition += 5; // 调整速度
     int totalLength = width() * 7 / 12 + 8;
-    if (m_energyFlowPosition + 20 > totalLength + width() / 3) {
+    bool flag = !m_chargeContactorClosed && m_limitedContactorClosed;
+
+    if (!flag && m_energyFlowPosition + energyBlockWidth > horizontalEndX - chargeContactorEndx + width() * 11 / 12 + height() * 19 / 12 + 28) {
+        m_energyFlowPosition = 0; // 循环能量块的位置
+    }
+    if(flag && m_energyFlowPosition + energyBlockWidth > horizontalEndX - chargeContactorEndx + width() * 11 / 12 + height() * 19 / 12 + 28 + height() / 3){
         m_energyFlowPosition = 0; // 循环能量块的位置
     }
     update(); // 重新绘制界面
@@ -526,32 +512,23 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
         //绘制能量块之前的水平线
         painter.drawLine(startX, startY, startX - horizontalPosition, startY);
         // 绘制能量块对应的电线部分
-        QLinearGradient gradient(startX - horizontalPosition, startY,
-                                 startX - horizontalPosition - energyBlockWidth, startY);
-        gradient.setColorAt(0, Qt::red);
-        gradient.setColorAt(0.5, energyColor);
-        gradient.setColorAt(1, Qt::red);
-        pen.setBrush(gradient);
-        painter.setPen(pen);
-        painter.drawLine(startX - horizontalPosition, startY,
-                         startX - horizontalPosition - energyBlockWidth, startY);
+        drawGradientLineSegment(startX - horizontalPosition, startY,
+                                startX - horizontalPosition - energyBlockWidth, startY,
+                                Qt::red, painter);
         // 绘制能量块之后的水平部分电线
-        pen.setColor(Qt::red); // 恢复原始颜色
-        painter.setPen(pen);
         painter.drawLine(startX - horizontalPosition - energyBlockWidth, startY, endX, startY);
     }else
     {
-        pen.setColor(Qt::red); // 恢复原始颜色
-        painter.setPen(pen);
         painter.drawLine(startX, startY, startX - horizontalLineLength, startY);
     }
 
     // 绘制垂直线
     int verticalLineLength = height() / 3;
     pen.setWidth(2);
+    pen.setStyle(Qt::DashLine);
     painter.setPen(pen);
     painter.drawLine(endX, startY, endX, startY + verticalLineLength);
-
+    pen.setStyle(Qt::SolidLine);
     // 绘制系统电压
     drawSystemVoltage(painter, endX, startY + verticalLineLength);
 
@@ -591,15 +568,9 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
         //能量块之前的部分
         painter.drawLine(startX, startY, startX, startY + m_energyFlowPosition - startLength);
         //能量块所代表的电线
-        QLinearGradient gradient(startX, startY + m_energyFlowPosition - startLength,
-                                 startX, startY + m_energyFlowPosition - startLength + energyBlockWidth);
-        gradient.setColorAt(0, Qt::red);
-        gradient.setColorAt(0.5, energyColor);
-        gradient.setColorAt(1, Qt::red);
-        pen.setBrush(gradient);
-        painter.setPen(pen);
-        painter.drawLine(startX, startY + m_energyFlowPosition - startLength,
-                         startX, startY + m_energyFlowPosition - startLength + energyBlockWidth);
+        drawGradientLineSegment(startX, startY + m_energyFlowPosition - startLength,
+                                startX, startY + m_energyFlowPosition - startLength + energyBlockWidth,
+                                Qt::red, painter);
     }else
     {
         painter.drawLine(startX, startY, startX, verticalEndY);
@@ -650,6 +621,7 @@ void CircuitDiagramWidget2::drawHeaterFaultContactor(QPainter &painter, int x, i
 
 /**
  * 放电起点： width() * 59 / 120 + 8 + width() * 0.2 / 4 + 8 = width() * 13 / 24 + 16
+ * 长度： height() / 6 + width() / 30
  * @brief CircuitDiagramWidget2::drawWireToHeater
  * @param painter
  * @param heaterFaultContactorX
@@ -691,20 +663,11 @@ void CircuitDiagramWidget2::drawWireToHeater(QPainter &painter, int heaterFaultC
             //能量块完全在垂直线段内
             if(positionInLine + energyBlockWidth < verticalLineLength){
                 // 绘制能量块完全在垂直部分
-                QLinearGradient gradient(startX, startY + positionInLine,
-                                         startX, startY + positionInLine + energyBlockWidth);
-                gradient.setColorAt(0, Qt::red);
-                gradient.setColorAt(0.5, energyColor); // 中间为白色
-                gradient.setColorAt(1, Qt::red);
-                pen.setBrush(gradient);
-                painter.setPen(pen);
-                painter.drawLine(startX, startY + positionInLine, startX, startY + positionInLine + energyBlockWidth);
-
+                drawGradientLineSegment(startX, startY + positionInLine,
+                                        startX, startY + positionInLine + energyBlockWidth,
+                                        Qt::red, painter);
                 // 绘制能量块之后的垂直部分电线
-                pen.setColor(Qt::red); // 恢复原始颜色
-                painter.setPen(pen);
                 painter.drawLine(startX, startY + positionInLine + energyBlockWidth, startX, verticalEndY);
-
                 // 绘制水平部分电线
                 painter.drawLine(startX, verticalEndY, startX + length - 2, verticalEndY);
             }else
@@ -713,26 +676,12 @@ void CircuitDiagramWidget2::drawWireToHeater(QPainter &painter, int heaterFaultC
                 int remainingLength = verticalLineLength - positionInLine;
 
                 // 计算渐变起点和终点，跨越垂直和水平部分
-                QLinearGradient gradient(startX, startY + positionInLine,
-                                         startX + (energyBlockWidth - remainingLength), verticalEndY);
-                gradient.setColorAt(0, Qt::red);
-                gradient.setColorAt(0.5, energyColor);
-                gradient.setColorAt(1, Qt::red);
-                pen.setBrush(gradient);
-                painter.setPen(pen);
-
-                // 绘制能量块在垂直部分和水平部分的电线
-                QPainterPath path;
-                path.moveTo(startX, startY + positionInLine);
-                path.lineTo(startX, verticalEndY);
-                path.lineTo(startX + (energyBlockWidth - remainingLength), verticalEndY);
-                painter.drawPath(path);
-
+                drawGradientPolylineSegment(startX, startY + positionInLine,
+                                            startX, verticalEndY,
+                                            startX + (energyBlockWidth - remainingLength), verticalEndY,
+                                            Qt::red, painter);
                 // 绘制能量块之后的水平部分电线
-                pen.setColor(Qt::red); // 恢复原始颜色
-                painter.setPen(pen);
                 painter.drawLine(startX + (energyBlockWidth - remainingLength), verticalEndY, startX + length - 2, verticalEndY);
-
             }
         } else {
             // 能量块完全在水平部分之后
@@ -741,15 +690,9 @@ void CircuitDiagramWidget2::drawWireToHeater(QPainter &painter, int heaterFaultC
             positionInLine -= verticalLineLength;
             painter.drawLine(startX, verticalEndY, startX + positionInLine, verticalEndY);
             //绘制能量块部分的水平线
-            QLinearGradient gradient(startX + positionInLine, verticalEndY,
-                                     startX + positionInLine + energyBlockWidth, verticalEndY);
-            gradient.setColorAt(0, Qt::red);
-            gradient.setColorAt(0.5, energyColor); // 中间为白色
-            gradient.setColorAt(1, Qt::red);
-            pen.setBrush(gradient);
-            painter.setPen(pen);
-            painter.drawLine(startX + positionInLine, verticalEndY,
-                             startX + positionInLine + energyBlockWidth, verticalEndY);
+            drawGradientLineSegment(startX + positionInLine, verticalEndY,
+                                    startX + positionInLine + energyBlockWidth, verticalEndY,
+                                    Qt::red, painter);
             //绘制能量块之后的水平线
             painter.drawLine(startX + positionInLine + energyBlockWidth, verticalEndY, startX + length - 2, verticalEndY);
         }
@@ -860,14 +803,25 @@ void CircuitDiagramWidget2::drawHeater(QPainter &painter, int x, int y, int side
     drawWireToHeaterContactor(painter, x, y, side);
 }
 
+/**
+ * 放电起点：width() * 23 / 40 + height() / 6 + 16
+ * 长度：height() / 12
+ * @brief CircuitDiagramWidget2::drawWireToHeaterContactor
+ * @param painter
+ * @param heaterX
+ * @param heaterY
+ * @param heaterWidth
+ */
 void CircuitDiagramWidget2::drawWireToHeaterContactor(QPainter &painter, int heaterX, int heaterY, int heaterWidth)
 {
+    int startLength = width() * 23 / 40 + height() / 6 + 16;
+    int positionInLine = m_energyFlowPosition - startLength;
     // 还原视口和窗口设置，以绘制其他部分
     painter.setViewport(0, 0, width(), height());
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 垂直线的起点是加热器底部
@@ -878,13 +832,35 @@ void CircuitDiagramWidget2::drawWireToHeaterContactor(QPainter &painter, int hea
     int verticalLineLength = height() / 12;
     int verticalEndY = startY + verticalLineLength;
 
-    // 绘制垂直线
-    painter.drawLine(startX, startY, startX, verticalEndY);
-
+    //能量块在此垂直线段
+    if(positionInLine >= 0 && positionInLine + energyBlockWidth <= verticalLineLength)
+    {
+        //绘制能量块之前的部分
+        painter.drawLine(startX, startY, startX, startY + positionInLine);
+        //绘制能量块部分
+        drawGradientLineSegment(startX, startY + positionInLine,
+                                startX, startY + positionInLine + energyBlockWidth,
+                                Qt::black, painter);
+        //绘制能量块之后的部分
+        painter.drawLine(startX, startY + positionInLine + energyBlockWidth, startX, verticalEndY);
+    }
+    else
+    {
+        // 绘制垂直线
+        painter.drawLine(startX, startY, startX, verticalEndY);
+    }
     // 在垂直线末端绘制加热接触器
     drawHeaterContactor(painter, startX, verticalEndY);
 }
 
+/**
+ * 充电起点（加热开关下方位置）: width() * 5 / 8 + height() / 4 + 24
+ * （加热开关下方那条线长度: height() / 2 - 8 - width() * 3 / 20
+ * @brief CircuitDiagramWidget2::drawHeaterContactor
+ * @param painter
+ * @param x
+ * @param y
+ */
 void CircuitDiagramWidget2::drawHeaterContactor(QPainter &painter, int x, int y)
 {
     int radius = 4;
@@ -920,8 +896,32 @@ void CircuitDiagramWidget2::drawHeaterContactor(QPainter &painter, int x, int y)
         line.setP2(endPoint);
     }
     painter.drawLine(line);
-    int length = height() / 2 - 4 - width() * 3 / 20;
-    painter.drawLine(x, y + centerDistance + 4, x, y + centerDistance + length);
+
+    pen.setWidth(5);
+    painter.setPen(pen);
+    //绘制垂直向下的电线
+    int startX = x;
+    //+2是因为线太粗了
+    int startY = y + centerDistance + 4 + 2;
+    //-4是因为线太粗了
+    int length = height() / 2 - 8 - width() * 3 / 20 - 4;
+    //能量块逻辑
+    int positionInLine = m_energyFlowPosition -  (width() * 5 / 8 + height() / 4 + 24);
+    if(positionInLine >= 0 && positionInLine + energyBlockWidth <= length)
+    {
+        //绘制能量块之前的电线
+        painter.drawLine(startX, startY, x, startY + positionInLine);
+        //绘制能量块所覆盖的电线
+        drawGradientLineSegment(startX, startY + positionInLine,
+                                startX, startY + positionInLine + energyBlockWidth,
+                                Qt::black, painter);
+        //绘制能量块之后的电线
+        painter.drawLine(startX, startY + positionInLine + energyBlockWidth, startX, startY + length);
+    }else
+    {
+        painter.drawLine(startX, startY, startX, startY + length);
+    }
+
 }
 
 void CircuitDiagramWidget2::drawSystemVoltage(QPainter &painter, int startX, int startY)
@@ -952,10 +952,19 @@ void CircuitDiagramWidget2::drawSystemVoltage(QPainter &painter, int startX, int
     drawWireToDischargeContactor(painter, startX, centerY + radius);
 }
 
+/**
+ * 放电起点: width() * 7 / 30 + height() * 3 / 4 + 10
+ *
+ * @brief CircuitDiagramWidget2::drawWireToDischargeContactor
+ * @param painter
+ * @param startX
+ * @param startY
+ */
 void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int startX, int startY)
 {
     // 设置画笔颜色
     QPen pen(Qt::black);
+    pen.setStyle(Qt::DashLine);
     pen.setWidth(2);
     painter.setPen(pen);
 
@@ -969,8 +978,28 @@ void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int 
     painter.drawLine(startX, startY, startX, verticalEndY);
 
     // 绘制水平向右的线
-    painter.drawLine(startX, verticalEndY, horizontalEndX, verticalEndY);
-
+    pen.setWidth(5);
+    pen.setStyle(Qt::SolidLine);
+    painter.setPen(pen);
+    int startLength = width() * 3 / 10 + height() * 3 / 4 + 10;
+    int positionInLine = m_energyFlowPosition - startLength;
+    if(positionInLine >= 0 && positionInLine + energyBlockWidth <= (mianContactorStartX - startX))
+    {
+        //绘制能量块之前的部分
+        if(positionInLine > 0)
+        {
+            painter.drawLine(startX, verticalEndY, startX + positionInLine, verticalEndY);
+        }
+        //绘制能量块覆盖的部分
+        drawGradientLineSegment(startX + positionInLine, verticalEndY,
+                                startX + positionInLine + energyBlockWidth, verticalEndY,
+                                Qt::black, painter);
+        //绘制能量块之后的部分
+        painter.drawLine(startX + positionInLine + energyBlockWidth, verticalEndY, horizontalEndX, verticalEndY);
+    }else
+    {
+        painter.drawLine(startX, verticalEndY, horizontalEndX, verticalEndY);
+    }
     // 绘制放电接触器
     drawDischargeContactor(painter, horizontalEndX, verticalEndY, width() / 5);
 }
@@ -1019,6 +1048,15 @@ void CircuitDiagramWidget2::drawDischargeContactor(QPainter &painter, int x, int
     drawWireToLimitedContactor(painter, startX, y, startX + width() / 8 + width() / 24);
 }
 
+/**
+ * 放电起点：width() * 7 / 12 + height() * 3 / 4 + 20
+ * 长度：width() / 6 + height() / 6
+ * @brief CircuitDiagramWidget2::drawWireToLimitedContactor
+ * @param painter
+ * @param dischargeContactorX
+ * @param dischargeContactorY
+ * @param chargeContactorX
+ */
 void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX)
 {
     // 还原视口和窗口设置，以绘制其他部分
@@ -1026,27 +1064,106 @@ void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int di
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 获取连接放电接触器和充电接触器的线的中点坐标
     int midX = (dischargeContactorX + chargeContactorX) / 2;
     int midY = dischargeContactorY;
-
     // 垂直线的终点位置
     int verticalLineLength = height() / 6;
     int verticalEndY = midY - verticalLineLength;
 
-    // 绘制从中点到垂直向上的线
-    painter.drawLine(midX, midY, midX, verticalEndY);
+    //充电开关断开，限流开关开启，那么从放电出来那一段是由限流来画
+    if(!m_chargeContactorClosed && m_limitedContactorClosed){
+        int positionInLine = m_energyFlowPosition - (width() * 7 / 12 + height() * 3 / 4 + 20);
+        //能量块在此段
+        if(positionInLine >= 0 && positionInLine + energyBlockWidth <= (height() / 6 + (chargeContactorX - dischargeContactorX))){
+            //第一段水平线有能量块
+            if(positionInLine <= (midX - dischargeContactorX)){
+                //绘制能量块之前的水平线+2是线太粗了
+                painter.drawLine(dischargeContactorX + 2, midY, dischargeContactorX + positionInLine, midY);
 
-    // 绘制水平向右的线，直到充电接触器的x坐标
-    painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
-
+                int energyVerLength = 0;
+                //能量块完全在第一段水平电线
+                if(positionInLine + energyBlockWidth <= (midX - dischargeContactorX)){
+                    //绘制能量块覆盖的电线
+                    drawGradientLineSegment(dischargeContactorX + positionInLine, midY, dischargeContactorX + positionInLine + energyBlockWidth, midY, Qt::black, painter);
+                    //绘制能量块之后的水平线
+                    painter.drawLine(dischargeContactorX + positionInLine + energyBlockWidth, midY, midX, midY);
+                }else //能量部分在水平线，部分在垂直线
+                {
+                    energyVerLength = positionInLine + energyBlockWidth - (midX - dischargeContactorX);
+                    //绘制能量块覆盖的电线
+                    drawGradientPolylineSegment(dischargeContactorX + positionInLine, midY, midX, midY, midX, midY - energyVerLength, Qt::black, painter);
+                }
+                //绘制剩余的电线
+                //绘制垂直向上的线
+                painter.drawLine(midX, midY - energyVerLength, midX, verticalEndY);
+                //绘制最后一段水平向右的线
+                painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
+            }else{
+                positionInLine -= (midX - dischargeContactorX);
+                //能量不再第一段水平线上，直接画+2是线太粗了
+                painter.drawLine(dischargeContactorX + 2, midY, midX, midY);
+                //垂直线上有能量
+                if(positionInLine <= (midY - verticalEndY)){
+                    //绘制能量块之前的线段
+                    painter.drawLine(midX, midY, midX, midY - positionInLine);
+                    int energyHorLength = 0;
+                    //能量块完全在垂直线段内
+                    if(positionInLine + energyBlockWidth <= (midY - verticalEndY)){
+                        drawGradientLineSegment(midX, midY - positionInLine, midX, midY - positionInLine - energyBlockWidth, Qt::black, painter);
+                        //绘制能量块之后的垂直线段
+                        painter.drawLine(midX, midY - positionInLine - energyBlockWidth, midX, verticalEndY);
+                    }else{//能量块部分在垂直线段上，部分在水平线段上
+                        energyHorLength = positionInLine + energyBlockWidth - (midY - verticalEndY);
+                        drawGradientPolylineSegment(midX, midY - positionInLine, midX, verticalEndY, midX + energyHorLength, verticalEndY, Qt::black, painter);
+                    }
+                    //绘制最后剩余的水平线段
+                    painter.drawLine(midX + energyHorLength, verticalEndY, chargeContactorX, verticalEndY);
+                }else{ //能量块完全落在最后一段
+                    //第一段水平线+2是线太粗了
+                    painter.drawLine(dischargeContactorX + 2, midY, midX, midY);
+                    //第二段垂直线
+                    painter.drawLine(midX, midY, midX, verticalEndY);
+                    positionInLine -= (midY - verticalEndY);
+                    //绘制能量块之前的水平线
+                    painter.drawLine(midX, verticalEndY, midX + positionInLine, verticalEndY);
+                    //绘制能量块覆盖的水平线
+                    drawGradientLineSegment(midX + positionInLine, verticalEndY, midX + positionInLine + energyBlockWidth, verticalEndY, Qt::black, painter);
+                    //绘制能量块之后的水平线
+                    painter.drawLine(midX + positionInLine + energyBlockWidth, verticalEndY, chargeContactorX, verticalEndY);
+                }
+            }
+        }else{
+            //能量块不在此段
+            //绘制放电开关到中点的线,+2是线太粗了
+            painter.drawLine(dischargeContactorX + 2, midY, midX, midY);
+            // 绘制从中点到垂直向上的线
+            painter.drawLine(midX, midY, midX, verticalEndY);
+            // 绘制水平向右的线，直到充电接触器的x坐标
+            painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
+        }
+    }else{
+        //电流不会经过这里
+        // 绘制从中点到垂直向上的线
+        painter.drawLine(midX, midY, midX, verticalEndY);
+        // 绘制水平向右的线，直到充电接触器的x坐标
+        painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
+    }
     //绘制limited接触器
     drawLimitedContactor(painter, chargeContactorX, verticalEndY);
 }
 
+/**
+ * 放电起点（开关结束侧）: width()∗4/5+height()∗11/12+28
+ * 长度：width() / 8 + height() / 6
+ * @brief CircuitDiagramWidget2::drawLimitedContactor
+ * @param painter
+ * @param x
+ * @param y
+ */
 void CircuitDiagramWidget2::drawLimitedContactor(QPainter &painter, int x, int y)
 {
     int radius = 4;
@@ -1083,33 +1200,273 @@ void CircuitDiagramWidget2::drawLimitedContactor(QPainter &painter, int x, int y
     }
     painter.drawLine(line);
 
-    //绘制水平向右的线
     int startX = x + centerDistance + radius;
-    painter.drawLine(startX, y, startX + width() / 16 + width() / 48, y);
+    //绘制电阻 +2是线太粗了
+    QRect rect(startX + width() / 24, y - width() / 96, width() / 12, width() / 48);
+    painter.drawRect(rect);
+    //绘制电线
+    pen.setWidth(5);
+    painter.setPen(pen);
 
-    //绘制垂直向下的线
-    startX = startX + width() / 16 + width() / 48;
-    painter.drawLine(startX, y, startX, y + height() / 6);
+    //充电开关断开，限流开关闭合，那么要考虑能量的情况，且要画垂直之后的水平线
+    if(!m_chargeContactorClosed && m_limitedContactorClosed)
+    {
+        int positionInLine = m_energyFlowPosition - (width() * 4/5+height() * 11/12+28);
+        //说明能量到达
+        if(positionInLine >= -energyBlockWidth / 2 && positionInLine <= (width() / 6 + height() / 6))
+        {
+            //能量块冒个头
+            if(positionInLine <= 0){
+                double colorAt = (positionInLine + energyBlockWidth / 2.0) / energyBlockWidth;
+                //绘制能量块所覆盖的电线
+                drawGradientLineSegment(startX, y, startX + positionInLine + energyBlockWidth, y, Qt::black, painter, colorAt);
+                //绘制开关之后水平向右的线
+                painter.drawLine(startX + positionInLine + energyBlockWidth, y, startX + width() / 24 - 2, y);
+                //绘制电阻之后的水平线，+2是线太粗了
+                painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+                //绘制垂直向下的线
+                painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+                //最后的一段水平线，只要画能量宽度就好
+                painter.drawLine(startX + width() / 6, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+            }else if(positionInLine <= width() / 24 - 2)
+            {   //能量块在第一段水平线中
+                //绘制能量块之前的线
+                painter.drawLine(startX + 2, y, startX + positionInLine, y);
+                //能量完全在水平线中
+                if(positionInLine <= width() / 24 - energyBlockWidth - 2)
+                {
+                    //绘制能量块
+                    drawGradientLineSegment(startX + positionInLine, y, startX + positionInLine + energyBlockWidth, y, Qt::black, painter);
+                    //绘制能量块之后的水平线
+                    painter.drawLine(startX + positionInLine + energyBlockWidth, y, startX + width() / 24 - 2, y);
+                }else if(positionInLine <= width() / 24 - energyBlockWidth / 2)
+                {
+                    //能量部分在水平线中
+                    //绘制能量块
+                    double colorAt = energyBlockWidth/ 2.0 / (width() / 24.0 - positionInLine - 2);
+                    drawGradientLineSegment(startX + positionInLine, y, startX + width() / 24 - 2, y, Qt::black, painter, colorAt);
+                }else{
+                    //能量在电阻中
+                    painter.drawLine(startX + positionInLine, y, startX + width() / 24 - 2, y);
+                }
+                //绘制电阻之后的水平线，+2是线太粗了
+                painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+                //绘制垂直向下的线
+                painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+                //最后的一段水平线，只要画能量宽度就好
+                painter.drawLine(startX + width() / 6, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+            }else
+            {
+                //第一段不存在能量，直接画
+                painter.drawLine(startX + 2, y, startX + width() / 24 - 2, y);
+                positionInLine -= (width() / 24 + width() / 12);
+                //能量块还在电阻里，正常画各段
+                if(positionInLine < -energyBlockWidth / 2)
+                {
+                    //绘制电阻之后的水平线，+2是线太粗了
+                    painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+                    //绘制垂直向下的线
+                    painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+                    //最后的一段水平线，只要画能量宽度就好
+                    painter.drawLine(startX + width() / 6, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+                }else if(positionInLine <= 0)
+                {
+                    //能量块部分在电阻里
+                    double colorAt = energyBlockWidth / 2.0 / (positionInLine + energyBlockWidth);
+                    drawGradientLineSegment(startX + width() / 8 + 2, y, startX + width() / 8 + positionInLine + energyBlockWidth, y, Qt::black, painter, colorAt);
+                    //绘制能量块后面的水平线
+                    painter.drawLine(startX + width() / 8 + positionInLine + energyBlockWidth, y, startX + width() / 6, y);
+                    //绘制垂直向下的线
+                    painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+                    //最后的一段水平线，只要画能量宽度就好
+                    painter.drawLine(startX + width() / 6, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+                }else if(positionInLine <= (width() / 6 - width() / 8))
+                {
+                    //能量块在电阻后的水平线
+                    //绘制能量块之前的水平线
+                    painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 8 + positionInLine, y);
+                    int energyVerLength = 0;
+                    if(positionInLine+ energyBlockWidth <= (width() / 6 - width() / 8))
+                    {
+                        //能量块完全在水平线上
+                        //绘制能量块覆盖的水平线
+                        drawGradientLineSegment(startX + width() / 8 + positionInLine, y, startX + width() / 8 + positionInLine + energyBlockWidth, y, Qt::black, painter);
+                        //绘制能量块之后的水平线
+                        painter.drawLine(startX + width() / 8 + positionInLine + energyBlockWidth, y, startX + width() / 6, y);
+                    }else{
+                        //能量块部分在水平线上
+                        energyVerLength = positionInLine + energyBlockWidth - (width() / 6 - width() / 8);
+                        drawGradientPolylineSegment(startX + width() / 8 + positionInLine, y, startX + width() / 6, y, startX + width() / 6, y + energyVerLength, Qt::black, painter);
+                    }
+
+                    //绘制垂直向下的线
+                    painter.drawLine(startX + width() / 6, y + energyVerLength, startX + width() / 6, y + height() / 6);
+                    //最后的一段水平线，只要画能量宽度就好
+                    painter.drawLine(startX + width() / 6, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+                }else{
+                    //能量块在垂直线段
+                    positionInLine -= width() / 24;
+                    //绘制电阻之后的水平线，+2是线太粗了
+                    painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+                    //绘制能量块之前的垂直线段
+                    painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + positionInLine);
+                    int energyHorLength = 0;
+                    //能量块完全在垂直线段内
+                    if(positionInLine + energyBlockWidth <= height() / 6)
+                    {
+                        //绘制能量块覆盖的线段
+                        drawGradientLineSegment(startX + width() / 6, y + positionInLine, startX + width() / 6, y + positionInLine + energyBlockWidth, Qt::black, painter);
+                        //绘制能量块之后的垂直线段
+                        painter.drawLine(startX + width() / 6, y + positionInLine + energyBlockWidth, startX + width() / 6, y + height() / 6);
+                    }else
+                    {
+                        //能量块部分在垂直线段内
+                        energyHorLength = positionInLine + energyBlockWidth - height() / 6;
+                        drawGradientPolylineSegment(startX + width() / 6, y + positionInLine, startX + width() / 6, y + height() / 6, startX + width() / 6 + energyHorLength, y + height() / 6, Qt::black, painter);
+                    }
+                    //绘制最后的水平线段
+                     painter.drawLine(startX + width() / 6 + energyHorLength, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+                }
+            }
+        }else
+        {
+            //能量还没到达/已经过去
+            //绘制电阻之后的水平线，+2是线太粗了
+            painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+            //绘制开关之后水平向右的线,+-2是因为线太粗了
+            painter.drawLine(startX + 2, y, startX + width() / 24 - 2, y);
+            //绘制垂直向下的线
+            painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+            //最后的一段水平线，在能量未过去之前都是这里画
+            if(positionInLine < -energyBlockWidth / 2)
+            {
+                painter.drawLine(startX + width() / 6, y + height() / 6, startX + width() / 6 + energyBlockWidth, y + height() / 6);
+            }
+        }
+
+    }else
+    {
+        //不考虑能量的情况,且不用画垂直后的水平线
+        //绘制电阻之后的水平线，+2是线太粗了
+        painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+        //绘制开关之后水平向右的线,+-2是因为线太粗了
+        painter.drawLine(startX + 2, y, startX + width() / 24 - 2, y);
+        //绘制垂直向下的线
+        painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+    }
+}
+
+void CircuitDiagramWidget2::drawGradientLineSegment(int x1, int y1, int x2, int y2, Qt::GlobalColor edgeColor, QPainter &painter, double color2At)
+{
+    //绘制能量块覆盖的部分
+    QLinearGradient gradient(x1, y1, x2, y2);
+    if(color2At != 0)
+    {
+        gradient.setColorAt(0, edgeColor);
+    }
+    gradient.setColorAt(color2At, energyColor);
+    gradient.setColorAt(1, edgeColor);
+    QPen pen = painter.pen();
+    pen.setBrush(gradient);
+    painter.setPen(pen);
+    painter.drawLine(x1, y1, x2, y2);
+    //绘制能量块之后的部分
+    pen.setColor(edgeColor); // 恢复原始颜色
+    painter.setPen(pen);
+}
+
+void CircuitDiagramWidget2::drawGradientPolylineSegment(int x1, int y1, int x2, int y2, int x3, int y3, Qt::GlobalColor edgeColor, QPainter &painter)
+{
+    // 计算渐变起点和终点，跨越垂直和水平部分
+    QLinearGradient gradient(x1, y1, x3, y3);
+    gradient.setColorAt(0, edgeColor);
+    gradient.setColorAt(0.5, energyColor);
+    gradient.setColorAt(1, edgeColor);
+    QPen pen = painter.pen();
+    pen.setBrush(gradient);
+    painter.setPen(pen);
+
+    // 绘制能量块在垂直部分和水平部分的电线
+    QPainterPath path;
+    path.moveTo(x1, y1);
+    path.lineTo(x2, y2);
+    path.lineTo(x3, y3);
+    painter.drawPath(path);
+    pen.setColor(edgeColor); // 恢复原始颜色
+    painter.setPen(pen);
+}
+
+bool CircuitDiagramWidget2::ifCloseLoop()
+{
+    return m_mainContactorClosed && m_dischargeContactorClosed && (m_chargeContactorClosed || m_limitedContactorClosed);
+}
+
+void CircuitDiagramWidget2::timerAndEnergyAdjust()
+{
+    //电路闭合,但是定时器已经停止
+    if(ifCloseLoop() && !timer->isActive())
+    {
+        timer->start();
+    }
+    //电路断开，但是定时器正在运行
+    if(!ifCloseLoop() && timer->isActive())
+    {
+        timer->stop();
+        //将能量位置归为0
+        m_energyFlowPosition = 0;
+    }
 }
 
 
+/**
+ * 充电起点：width() * 7 / 12 + height() * 3 / 4 + 20
+ * 长度：width() / 8 + width() / 24
+ * @brief CircuitDiagramWidget2::drawWireToChargeContactor
+ * @param painter
+ * @param startX
+ * @param startY
+ * @param batteryWidth
+ */
 void CircuitDiagramWidget2::drawWireToChargeContactor(QPainter &painter, int startX, int startY, int batteryWidth)
 {
     // 设置画笔颜色
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 水平线长度为画布宽度的1/20
     int horizontalLineLength = width() / 8 + width() / 24;
 
     // 计算水平线的终点坐标
+    //+2是因为线太粗了
+    startX += 2;
     int horizontalLineEndX = startX + horizontalLineLength;
     int horizontalLineEndY = startY;
 
     // 绘制水平线
-    painter.drawLine(startX, startY, horizontalLineEndX, horizontalLineEndY);
+    int positionInLine = m_energyFlowPosition - (width() * 7 / 12 + height() * 3 / 4 + 20);
 
+    //如果限流开关闭合且充电开关断开，放电开关出来那段由限流去画,这里只画后半段
+    if(m_limitedContactorClosed && !m_chargeContactorClosed){
+        //+2是因为线太粗了
+        painter.drawLine(startX + horizontalLineLength / 2 + 2, startY, horizontalLineEndX, horizontalLineEndY);
+    }else if(m_chargeContactorClosed && positionInLine >= 0 && positionInLine + energyBlockWidth <= horizontalLineLength){
+        //绘制能量块之前的部分
+        if(positionInLine > 0)
+        {
+            painter.drawLine(startX, startY, startX + positionInLine, horizontalLineEndY);
+        }
+        //绘制能量块所覆盖的那部分
+        drawGradientLineSegment(startX + positionInLine, startY,
+                                startX + positionInLine + energyBlockWidth, startY,
+                                Qt::black, painter);
+        //绘制能量块之后的部分
+        painter.drawLine(startX + positionInLine + energyBlockWidth, startY, horizontalLineEndX, horizontalLineEndY);
+
+    }else
+    {
+       painter.drawLine(startX, startY, horizontalLineEndX, horizontalLineEndY);
+    }
     // 放电接触器的位置 (相对电池)
     int chargeContactorX = horizontalLineEndX;
     int chargeContactorY = horizontalLineEndY;
@@ -1156,6 +1513,16 @@ void CircuitDiagramWidget2::drawChargeContactor(QPainter &painter, int x, int y,
     chargeContactorEndx = x + centerDistance + radius;
 }
 
+/**
+ * 充电起点：width()*19/24 + height() * 3/4 + 28
+ * 长度: horizontalEndX−chargeContactorEndx+height()*5/6+width() / 8
+ * @brief CircuitDiagramWidget2::drawWireFromNegativeElectrode
+ * @param painter
+ * @param batteryX
+ * @param batteryY
+ * @param batteryWidth
+ * @param batteryHeight
+ */
 void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight)
 {
     // 还原视口和窗口设置，以绘制其他部分
@@ -1163,7 +1530,7 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 电池右侧电极的坐标
@@ -1177,21 +1544,191 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
 
     // 垂直线长度为电池高度的1/4
     int verticalLineLength = batteryHeight / 4;
-
-    // 绘制从电池负极向上垂直线
-    painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
-
     // 水平向右的部分，长度为画布宽度的1/20
     int horizontalLineLength = width() / 10;
-    int horizontalEndX = batteryNegPosX + horizontalLineLength;
-    painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
-
+    horizontalEndX = batteryNegPosX + horizontalLineLength;
     // 垂直向下的部分，长度为画布高度的5/6
-    int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6;
-    painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
+    int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6 - 2;
+    int positionInLine = m_energyFlowPosition - (width()*19/24 + height() * 3/4 + 28);
 
-    //绘制与充电接触器相连的电线
-    painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY);
+    //充电开关断开，限流开关闭合
+    bool flag = !m_chargeContactorClosed && limitedContactorClosed();
+    if(flag)
+    {
+        //只考虑limit线路流动到水平线段开始
+        positionInLine = m_energyFlowPosition - (width()*29/30+height()*13/12+28);
+    }
+    //能量块未进入
+    if(positionInLine < 0)
+    {
+        // 绘制从电池负极向上垂直线
+        painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
+        // 水平向右的部分，长度为画布宽度的1/20
+        painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
+        // 垂直向下的部分，长度为画布高度的5/6
+        painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
+        if(flag)
+        {
+            //这个时候，有一段需要limit那里来画，-5是limit出来那条线的宽度是5，这部分也去掉
+            int length = width() / 6 - 5;
+            painter.drawLine(chargeContactorEndx + 2, verticalEndY, chargeContactorEndx + length, verticalEndY);
+            painter.drawLine(chargeContactorEndx + length + 2 + energyBlockWidth, verticalEndY, horizontalEndX, verticalEndY);
+        }else
+        {
+            //绘制与充电接触器相连的电线, +2是因为线太粗了
+            painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY);
+        }
+
+    }
+    //能量块进入,可能是从充电开关过来的，也有可能是限流开关过来的
+    if(positionInLine >= 0)
+    {
+        //如果从限流开关过来
+        if(flag)
+        {
+            positionInLine += width() / 6;
+        }
+        //水平线段有能量
+        if(positionInLine <= (horizontalEndX - chargeContactorEndx))
+        {
+            int energyVerLength = 0;
+            //绘制水平线段能量之前的电线 +1是因为线太粗了
+            painter.drawLine(chargeContactorEndx + 1, verticalEndY, chargeContactorEndx + positionInLine, verticalEndY);
+            //能量完全在水平线段之内
+            if(positionInLine + energyBlockWidth <= (horizontalEndX - chargeContactorEndx))
+            {
+                //绘制能量覆盖的那段
+                drawGradientLineSegment(chargeContactorEndx + positionInLine, verticalEndY,
+                                        chargeContactorEndx + positionInLine + energyBlockWidth, verticalEndY,
+                                        Qt::black, painter);
+                //绘制能量块之后的正常线段
+                painter.drawLine(chargeContactorEndx + positionInLine + energyBlockWidth, verticalEndY,
+                                 horizontalEndX, verticalEndY);
+            }else
+            {
+                //能量部分在水平线段，部分在垂直线段
+                int remainingLength = horizontalEndX - chargeContactorEndx - positionInLine;
+                energyVerLength = energyBlockWidth - remainingLength;
+                // 计算渐变起点和终点，跨越垂直和水平部分
+                drawGradientPolylineSegment(chargeContactorEndx + positionInLine, verticalEndY,
+                                            horizontalEndX, verticalEndY,
+                                            horizontalEndX, verticalEndY - energyVerLength,
+                                            Qt::black, painter);
+            }
+            //绘制能量块之后的垂直线段到电池负极
+            // 垂直向上的部分，长度为画布高度的5/6
+            painter.drawLine(horizontalEndX, verticalEndY - energyVerLength, horizontalEndX, batteryNegPosY - verticalLineLength);
+            // 绘制从电池负极向上垂直线
+            painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
+            // 水平向右的部分，长度为画布宽度的1/20
+            painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
+        }else
+        {
+            //水平线段没能量先把水平线段画了+2是因为线太粗了
+            painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY);
+            positionInLine -= (horizontalEndX - chargeContactorEndx);
+            //垂直线段有能量
+            if(positionInLine <= verticalEndY - (batteryNegPosY - verticalLineLength)){
+                int energyHoriLength = 0;
+                //绘制能量块前的垂直线
+                painter.drawLine(horizontalEndX, verticalEndY, horizontalEndX, verticalEndY - positionInLine);
+
+                //能量块完全在垂直线段内
+                if(positionInLine + energyBlockWidth <= verticalEndY - (batteryNegPosY - verticalLineLength))
+                {
+                    //绘制能量覆盖的那段
+                    drawGradientLineSegment(horizontalEndX, verticalEndY - positionInLine,
+                                            horizontalEndX, verticalEndY - positionInLine - energyBlockWidth,
+                                            Qt::black, painter);
+                    //绘制能量块之后的正常线段
+                    painter.drawLine(horizontalEndX, verticalEndY - positionInLine - energyBlockWidth,
+                                     horizontalEndX, batteryNegPosY - verticalLineLength);
+                }else
+                {
+                    //能量块部分在垂直线段内
+                    int remainingLength = verticalEndY - (batteryNegPosY - verticalLineLength) - positionInLine;
+                    energyHoriLength = energyBlockWidth - remainingLength;
+                    // 计算渐变起点和终点，跨越垂直和水平部分
+                    drawGradientPolylineSegment(horizontalEndX, verticalEndY - positionInLine,
+                                                horizontalEndX, batteryNegPosY - verticalLineLength,
+                                                horizontalEndX - energyHoriLength, batteryNegPosY - verticalLineLength,
+                                                Qt::black, painter);
+                }
+                //绘制剩余的连接到负电极的电线
+                pen.setColor(Qt::black); // 恢复原始颜色
+                painter.setPen(pen);
+                // 绘制从电池负极向上垂直线
+                painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
+                // 水平向右的部分，长度为画布宽度的1/20
+                painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX - energyHoriLength, batteryNegPosY - verticalLineLength);
+            }else
+            {
+                //能量至少到了最后那段水平线段，可以线绘制第一个水平和垂直线段
+                painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
+                //绘制与充电接触器相连的电线+2是因为线太粗了
+                painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY);
+                positionInLine -= (verticalEndY - (batteryNegPosY - verticalLineLength));
+                //最后那段水平线段有能量
+                if(positionInLine <= (horizontalEndX - batteryNegPosX))
+                {
+                    int energyVerLength = 0;
+                    //先绘制能量前的
+                    painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX - positionInLine, batteryNegPosY - verticalLineLength);
+                    //能量完全在水平线段内
+                    if(positionInLine + energyBlockWidth <= (horizontalEndX - batteryNegPosX))
+                    {
+                        //绘制能量覆盖的那段
+                        drawGradientLineSegment(horizontalEndX - positionInLine, batteryNegPosY - verticalLineLength,
+                                                horizontalEndX - positionInLine - energyBlockWidth, batteryNegPosY - verticalLineLength,
+                                                Qt::black, painter);
+                        //绘制能量块之后的正常线段
+                        painter.drawLine(horizontalEndX - positionInLine - energyBlockWidth, batteryNegPosY - verticalLineLength,
+                                         batteryNegPosX, batteryNegPosY - verticalLineLength);
+                    }else
+                    {
+                        //能量部分在水平线段内
+                        int remainingLength = horizontalEndX - batteryNegPosX - positionInLine;
+                        energyVerLength = energyBlockWidth - remainingLength;
+                        // 计算渐变起点和终点，跨越垂直和水平部分
+                        drawGradientPolylineSegment(horizontalEndX - positionInLine, batteryNegPosY - verticalLineLength,
+                                                    batteryNegPosX, batteryNegPosY - verticalLineLength,
+                                                    batteryNegPosX, batteryNegPosY - verticalLineLength + energyVerLength,
+                                                    Qt::black, painter);
+                    }
+                    //绘制最后连向负电极的电线
+                    painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength + energyVerLength);
+                }else
+                {
+                    //能量在最后的垂直线段
+                    positionInLine -= (horizontalEndX - batteryNegPosX);
+                    //只考虑完全在垂直线段内
+                    if(positionInLine >= 0 && positionInLine <= verticalLineLength)
+                    {
+                        //绘制能量块之前的垂线
+                        painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, batteryNegPosX, batteryNegPosY - verticalLineLength + positionInLine);
+                        //绘制能量覆盖的那段
+                        drawGradientLineSegment(batteryNegPosX, batteryNegPosY - verticalLineLength + positionInLine,
+                                                batteryNegPosX, batteryNegPosY - verticalLineLength + positionInLine + energyBlockWidth,
+                                                Qt::black, painter);
+                        //绘制能量块之后的正常线段
+                        painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength + positionInLine + energyBlockWidth,
+                                         batteryNegPosX, batteryNegPosY);
+                        // 水平向右的部分，长度为画布宽度的1/20
+                        int horizontalLineLength = width() / 10;
+                        int horizontalEndX = batteryNegPosX + horizontalLineLength;
+                        painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
+
+                        // 垂直向下的部分，长度为画布高度的5/6
+                        int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6;
+                        painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
+
+                        //绘制与充电接触器相连的电线+2是因为线太粗了
+                        painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY);
+                    }
+                }
+            }
+        }
+    }
 }
 
 
