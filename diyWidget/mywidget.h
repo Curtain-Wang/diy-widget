@@ -21,6 +21,8 @@ private slots:
 private:
     void drawHorZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);  // 用于绘制水平折线
     void drawVerZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);  // 用于绘制垂直折线
+    void drawHorLeftZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);  // 用于绘制水平向左的折线
+    void drawVerUpZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);
     QTimer *timer;  // 定时器指针
     int offset;    // 用于控制填充区域的位置
 };
