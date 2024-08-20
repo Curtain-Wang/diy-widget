@@ -16,7 +16,7 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     , m_heaterFaultContactorClosed(true)
     , m_isHeating(true)
     , m_heaterContactorClosed(true)
-    , m_limitedContactorClosed(false),
+    , m_limitedContactorClosed(true),
     m_packColor1(Qt::gray),  // 初始化为灰色
     m_packColor2(Qt::gray),  // 初始化为灰色
     m_packColor3(Qt::gray),  // 初始化为灰色
@@ -25,7 +25,7 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     m_packColor6(Qt::gray),   // 初始化为灰色
     m_language(2), //默认中文
     offset(0),
-    m_state(1)
+    m_state(2)
 {
     setMinimumSize(200, 140);
     // 初始化定时器，每隔100毫秒触发一次updatePosition槽函数
@@ -362,14 +362,14 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     //充电
     if(m_state == 1 && m_mainContactorClosed)
     {
-        drawHorZigzagLine(painter, batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength, Qt::red, Qt::white);
-        drawVerZigzagLine(painter, batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength, Qt::red, Qt::white);
+        drawHorZigzagLine(painter, batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength, Qt::red, Qt::green);
+        drawVerZigzagLine(painter, batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength, Qt::red, Qt::green);
     }
     //放电
     else if(m_state == 2 && m_mainContactorClosed)
     {
-        drawVerUpZigzagLine(painter, batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength, Qt::red, Qt::white);
-        drawHorLeftZigzagLine(painter, batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength, Qt::red, Qt::white);
+        drawVerUpZigzagLine(painter, batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength, Qt::red, Qt::green);
+        drawHorLeftZigzagLine(painter, batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength, Qt::red, Qt::green);
 
     }
     //其他
@@ -445,12 +445,12 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
     //充电
     if(m_state == 1)
     {
-        drawHorZigzagLine(painter, startX, startY, endX, startY, Qt::red, Qt::white);
+        drawHorZigzagLine(painter, startX, startY, endX, startY, Qt::red, Qt::green);
     }
     //放电
     else if (m_state == 2)
     {
-        drawHorLeftZigzagLine(painter, startX, startY, endX, startY, Qt::red, Qt::white);
+        drawHorLeftZigzagLine(painter, startX, startY, endX, startY, Qt::red, Qt::green);
     }
     //其他
     else
@@ -490,7 +490,7 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
     //存在能量流动
     if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
     {
-        drawVerZigzagLine(painter, startX, startY + 5, startX, verticalEndY, Qt::red, Qt::white);
+        drawVerZigzagLine(painter, startX, startY + 5, startX, verticalEndY, Qt::red, Qt::green);
     }
     //其他
     else
@@ -563,15 +563,15 @@ void CircuitDiagramWidget2::drawWireToHeater(QPainter &painter, int heaterFaultC
 
     if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
     {
-        drawVerZigzagLine(painter, startX, startY, startX, verticalEndY, Qt::red, Qt::white);
-        drawHorZigzagLine(painter, startX, verticalEndY, startX + length, verticalEndY, Qt::red, Qt::white);
+        drawVerZigzagLine(painter, startX, startY, startX, verticalEndY, Qt::red, Qt::green);
+        drawHorZigzagLine(painter, startX, verticalEndY, startX + length - 2, verticalEndY, Qt::red, Qt::green);
     }
     else
     {
         // 绘制垂直线
         painter.drawLine(startX, startY, startX, verticalEndY);
         // 绘制水平线
-        painter.drawLine(startX, verticalEndY, startX + length, verticalEndY);
+        painter.drawLine(startX, verticalEndY, startX + length - 2, verticalEndY);
     }
     //绘制加热器
     drawHeater(painter, startX + length, verticalEndY - batteryWidth / 4, batteryWidth / 2);
@@ -692,7 +692,7 @@ void CircuitDiagramWidget2::drawWireToHeaterContactor(QPainter &painter, int hea
 
     if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
     {
-        drawVerZigzagLine(painter, startX, startY, startX, verticalEndY, Qt::black, Qt::white);
+        drawVerZigzagLine(painter, startX, startY, startX, verticalEndY, Qt::black, Qt::green);
     }
     else
     {
@@ -743,7 +743,7 @@ void CircuitDiagramWidget2::drawHeaterContactor(QPainter &painter, int x, int y)
     painter.setPen(pen);
     if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
     {
-        drawVerZigzagLine(painter, x, y + centerDistance + 4 + 2, x, y + centerDistance + length - 4, Qt::black, Qt::white);
+        drawVerZigzagLine(painter, x, y + centerDistance + 4 + 2, x, y + centerDistance + length - 4, Qt::black, Qt::green);
     }
     else
     {
@@ -795,12 +795,12 @@ void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int 
     //充电
     if(m_state == 1)
     {
-        drawHorLeftZigzagLine(painter, startX, verticalEndY, horizontalEndX, verticalEndY, Qt::black, Qt::white);
+        drawHorLeftZigzagLine(painter, startX, verticalEndY, horizontalEndX, verticalEndY, Qt::black, Qt::green);
     }
     //放电
     else if(m_state == 2)
     {
-        drawHorZigzagLine(painter, startX, verticalEndY, horizontalEndX, verticalEndY, Qt::black, Qt::white);
+        drawHorZigzagLine(painter, startX, verticalEndY, horizontalEndX, verticalEndY, Qt::black, Qt::green);
     }
     //其他情况
     else
@@ -875,7 +875,7 @@ void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int di
 
     // 获取连接放电接触器和充电接触器的线的中点坐标
     int midX = (dischargeContactorX + chargeContactorX) / 2;
-    int midY = dischargeContactorY;
+    int midY = dischargeContactorY - 5;
 
     // 垂直线的终点位置
     int verticalLineLength = height() / 6;
@@ -884,14 +884,16 @@ void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int di
     //充电
     if(m_state == 1 && !m_chargeContactorClosed && m_limitedContactorClosed)
     {
-        drawHorLeftZigzagLine(painter, midX, verticalEndY, chargeContactorX, verticalEndY, Qt::black, Qt::white);
-        drawVerZigzagLine(painter, midX, midY, midX, verticalEndY, Qt::black, Qt::white);
+        drawHorLeftZigzagLine(painter, dischargeContactorX, dischargeContactorY, midX, dischargeContactorY, Qt::black, Qt::green);
+        drawHorLeftZigzagLine(painter, midX, verticalEndY, chargeContactorX, verticalEndY, Qt::black, Qt::green);
+        drawVerZigzagLine(painter, midX, midY, midX, verticalEndY, Qt::black, Qt::green);
     }
     //放电
     else if (m_state == 2 && !m_chargeContactorClosed && m_limitedContactorClosed)
     {
-        drawHorZigzagLine(painter, midX, verticalEndY, chargeContactorX, verticalEndY, Qt::black, Qt::white);
-        drawVerUpZigzagLine(painter, midX, midY, midX, verticalEndY, Qt::black, Qt::white);
+        drawHorZigzagLine(painter, dischargeContactorX, dischargeContactorY, midX, dischargeContactorY, Qt::black, Qt::green);
+        drawHorZigzagLine(painter, midX, verticalEndY, chargeContactorX, verticalEndY, Qt::black, Qt::green);
+        drawVerUpZigzagLine(painter, midX, midY, midX, verticalEndY, Qt::black, Qt::green);
     }
     //其他
     else
@@ -941,13 +943,38 @@ void CircuitDiagramWidget2::drawLimitedContactor(QPainter &painter, int x, int y
     }
     painter.drawLine(line);
 
-    //绘制水平向右的线
-    int startX = x + centerDistance + radius;
-    painter.drawLine(startX, y, startX + width() / 16 + width() / 48, y);
 
-    //绘制垂直向下的线
-    startX = startX + width() / 16 + width() / 48;
-    painter.drawLine(startX, y, startX, y + height() / 6);
+    int startX = x + centerDistance + radius;
+    //绘制电阻 +2是线太粗了
+    QRect rect(startX + width() / 24, y - width() / 96, width() / 12, width() / 48);
+    painter.drawRect(rect);
+
+    pen.setWidth(5);
+    painter.setPen(pen);
+
+    //充电
+    if(m_state == 1 && !m_chargeContactorClosed && m_limitedContactorClosed)
+    {
+        drawHorLeftZigzagLine(painter, startX + 2, y, startX + width() / 24 - 2, y, Qt::black, Qt::green);
+        drawHorLeftZigzagLine(painter, startX + width() / 8 + 2, y, startX + width() / 6, y, Qt::black, Qt::green);
+        drawVerUpZigzagLine(painter, startX + width() / 6, y, startX + width() / 6, y + height() / 6, Qt::black, Qt::green);
+    }
+    //放电
+    else if(m_state == 2 && !m_chargeContactorClosed && m_limitedContactorClosed)
+    {
+        drawHorZigzagLine(painter, startX + 2, y, startX + width() / 24 - 2, y, Qt::black, Qt::green);
+        drawHorZigzagLine(painter, startX + width() / 8 + 2, y, startX + width() / 6, y, Qt::black, Qt::green);
+        drawVerZigzagLine(painter, startX + width() / 6, y, startX + width() / 6, y + height() / 6, Qt::black, Qt::green);
+    }
+    else
+    {
+        //绘制水平向右的线
+        painter.drawLine(startX + 2, y, startX + width() / 24 - 2, y);
+        //绘制电阻之后的水平线，+2是线太粗了
+        painter.drawLine(startX + width() / 8 + 2, y, startX + width() / 6, y);
+        //绘制垂直向下的线
+        painter.drawLine(startX + width() / 6, y, startX + width() / 6, y + height() / 6);
+    }
 }
 
 
@@ -969,12 +996,18 @@ void CircuitDiagramWidget2::drawWireToChargeContactor(QPainter &painter, int sta
     //充电
     if(m_state == 1 && m_chargeContactorClosed)
     {
-        drawHorLeftZigzagLine(painter, startX, startY, horizontalLineEndX, horizontalLineEndY, Qt::black, Qt::white);
+        drawHorLeftZigzagLine(painter, startX, startY, horizontalLineEndX, horizontalLineEndY, Qt::black, Qt::green);
     }
     //放电
     else if (m_state == 2 && m_chargeContactorClosed)
     {
-        drawHorZigzagLine(painter, startX, startY, horizontalLineEndX, horizontalLineEndY, Qt::black, Qt::white);
+        drawHorZigzagLine(painter, startX, startY, horizontalLineEndX, horizontalLineEndY, Qt::black, Qt::green);
+    }
+    //电流流向限流开关
+    else if ((m_state == 1 || m_state == 2) && !m_chargeContactorClosed && m_limitedContactorClosed)
+    {
+        int midX = (startX + horizontalLineEndX) / 2;
+        painter.drawLine(midX + 5, startY, horizontalLineEndX, horizontalLineEndY);
     }
     //其他
     else
@@ -1034,7 +1067,7 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 电池右侧电极的坐标
@@ -1052,24 +1085,49 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
     int horizontalLineLength = width() / 10;
     int horizontalEndX = batteryNegPosX + horizontalLineLength;
     // 垂直向下的部分，长度为画布高度的5/6
-    int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6;
+    int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6 - 2;
 
     // 绘制从电池负极向上垂直线
     //充电
     if(m_state == 1)
     {
-        drawVerUpZigzagLine(painter, batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
-        drawHorZigzagLine(painter, batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
-        drawVerZigzagLine(painter, horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY, Qt::black, Qt::white);
-        drawHorLeftZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY, Qt::black, Qt::white);
+
+        drawHorZigzagLine(painter, batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength, Qt::black, Qt::green);
+        drawVerZigzagLine(painter, horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY, Qt::black, Qt::green);
+        //电流流向limit
+        if(!m_chargeContactorClosed && m_limitedContactorClosed)
+        {
+            drawHorLeftZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx + width() / 6, verticalEndY, Qt::black, Qt::green);
+            //绘制与充电接触器相连的电线
+            pen.setColor(Qt::black);
+            painter.setPen(pen);
+            painter.drawLine(chargeContactorEndx + width() / 6, verticalEndY, chargeContactorEndx + 2, verticalEndY);
+        }
+        else
+        {
+            drawHorLeftZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY, Qt::black, Qt::green);
+        }
+        drawVerUpZigzagLine(painter, batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength, Qt::black, Qt::green);
     }
     //放电
     else if (m_state == 2)
     {
-        drawVerZigzagLine(painter, batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
-        drawHorLeftZigzagLine(painter, batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
-        drawVerUpZigzagLine(painter, horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY, Qt::black, Qt::white);
-        drawHorZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY, Qt::black, Qt::white);
+        drawVerZigzagLine(painter, batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength, Qt::black, Qt::green);
+        drawHorLeftZigzagLine(painter, batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength, Qt::black, Qt::green);
+        drawVerUpZigzagLine(painter, horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY, Qt::black, Qt::green);
+        //电流流向limit
+        if(!m_chargeContactorClosed && m_limitedContactorClosed)
+        {
+            drawHorZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx + width() / 6, verticalEndY, Qt::black, Qt::green);
+            //绘制与充电接触器相连的电线
+            pen.setColor(Qt::black);
+            painter.setPen(pen);
+            painter.drawLine(chargeContactorEndx + width() / 6, verticalEndY, chargeContactorEndx + 2, verticalEndY);
+        }
+        else
+        {
+            drawHorZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY, Qt::black, Qt::green);
+        }
     }
     else
     {
@@ -1077,7 +1135,7 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
         painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
         painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
         //绘制与充电接触器相连的电线
-        painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY);
+        painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx + 2, verticalEndY);
     }
 
 }
