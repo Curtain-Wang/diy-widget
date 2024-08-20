@@ -24,6 +24,7 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
     Q_PROPERTY(quint8 language READ language WRITE setLanguage NOTIFY languageChanged)
+    Q_PROPERTY(bool discharged READ discharged WRITE setDischarged NOTIFY dischargedChanged)
 
 public:
     explicit CircuitDiagramWidget2(QWidget *parent = nullptr);
@@ -79,6 +80,9 @@ public:
     quint8 language() const;
     void setLanguage(const quint8 &language);
 
+    bool discharged() const;
+    void setDischarged(const bool &discharged);
+
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
@@ -129,6 +133,7 @@ signals:
     void packColor5Changed(const QColor &color);
     void packColor6Changed(const QColor &color);
     void languageChanged(quint8 language);
+    void dischargedChanged(bool discharged);
 
 private slots:
     void on_timer_timeout();
@@ -154,18 +159,23 @@ private:
     QColor m_packColor5;
     QColor m_packColor6;
     quint8 m_language;
-
+    bool m_discharged;
 private:
     int chargeContactorEndx;
     int offsetX;
     double mianContactorStartX;
     double horizontalEndX;
-    int m_energyFlowPosition = 0;
+    int m_energyFlowPosition;
+    int m_chargeHeatEnergyFlowPosition = 0;
     Qt::GlobalColor energyColor;
     int energyBlockWidth = 20; // 能量块的宽度
     // QWidget interface
     QTimer* timer;
-    int counter = 0;
+    const int CHARGE_START = 420;
+    const int DISCHARGE_START = 0;
+    //连向放电开关的线的头部线段归属
+    bool wireToDischHeadflag = false;
+
 protected:
     void resizeEvent(QResizeEvent *event);
 };
