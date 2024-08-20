@@ -5,16 +5,17 @@
 #include <QLinearGradient>
 #include  <QPainterPath>
 #include <QResizeEvent>
+#include <QTime>
 
 CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
-    , m_mainContactorClosed(false)
+    , m_mainContactorClosed(true)
     , m_systemVoltage(0)
-    , m_dischargeContactorClosed(false)
-    , m_chargeContactorClosed(false)
-    , m_heaterFaultContactorClosed(false)
-    , m_isHeating(false)
-    , m_heaterContactorClosed(false)
+    , m_dischargeContactorClosed(true)
+    , m_chargeContactorClosed(true)
+    , m_heaterFaultContactorClosed(true)
+    , m_isHeating(true)
+    , m_heaterContactorClosed(true)
     , m_limitedContactorClosed(false),
     m_packColor1(Qt::gray),  // 初始化为灰色
     m_packColor2(Qt::gray),  // 初始化为灰色
@@ -22,9 +23,15 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     m_packColor4(Qt::gray),  // 初始化为灰色
     m_packColor5(Qt::gray),  // 初始化为灰色
     m_packColor6(Qt::gray),   // 初始化为灰色
-    m_language(2) //默认中文
+    m_language(2), //默认中文
+    offset(0),
+    m_state(1)
 {
     setMinimumSize(200, 140);
+    // 初始化定时器，每隔100毫秒触发一次updatePosition槽函数
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &CircuitDiagramWidget2::updatePosition);
+    timer->start(100);  // 100毫秒的时间间隔
 }
 
 int CircuitDiagramWidget2::chargeLevel() const {
@@ -231,6 +238,20 @@ void CircuitDiagramWidget2::setLanguage(const quint8 &language) {
     }
 }
 
+quint8 CircuitDiagramWidget2::state() const
+{
+    return m_state;
+}
+
+void CircuitDiagramWidget2::setState(const quint8 &state)
+{
+    if(m_state != state){
+        m_state = state;
+        emit stateChanged(m_state);
+        update();
+    }
+}
+
 void CircuitDiagramWidget2::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     painter.setBrush(Qt::darkBlue);
     painter.drawRect(blueRect);
@@ -313,7 +334,7 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::red); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 电池左侧电极的坐标
@@ -338,12 +359,27 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     int mainContactorY = batteryPosY - verticalLineLength;
 
     // 绘制从电池正极到主接触器的线
-    painter.drawLine(batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength); // 垂直线
-    painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength); // 水平线，连接到右侧圆的中心
+    //充电
+    if(m_state == 1 && m_mainContactorClosed)
+    {
+        drawHorZigzagLine(painter, batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength, Qt::red, Qt::white);
+        drawVerZigzagLine(painter, batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength, Qt::red, Qt::white);
+    }
+    //放电
+    else if(m_state == 2 && m_mainContactorClosed)
+    {
+        drawVerUpZigzagLine(painter, batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength, Qt::red, Qt::white);
+        drawHorLeftZigzagLine(painter, batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength, Qt::red, Qt::white);
 
+    }
+    //其他
+    else
+    {
+        painter.drawLine(batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength);
+        painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, mainContactorX + centerDistance, batteryPosY - verticalLineLength);
+    }
     // 绘制主接触器
     drawMainContactor(painter, mainContactorX, mainContactorY, batteryWidth);
-
     // 绘制从主接触器到系统电压的导线
     drawWireToSystemVoltage(painter, mainContactorX, mainContactorY, batteryWidth);
 }
@@ -395,7 +431,7 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::red); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 水平线的起点是主接触器左侧圆弧
@@ -405,12 +441,26 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
     // 计算水平线的终点位置
     int horizontalLineLength = width() / 3 - width() / 30;
     int endX = startX - horizontalLineLength;
-
-    // 绘制水平线
-    painter.drawLine(startX, startY, endX, startY);
-
-    // 绘制垂直线
     int verticalLineLength = height() / 3;
+    //充电
+    if(m_state == 1)
+    {
+        drawHorZigzagLine(painter, startX, startY, endX, startY, Qt::red, Qt::white);
+    }
+    //放电
+    else if (m_state == 2)
+    {
+        drawHorLeftZigzagLine(painter, startX, startY, endX, startY, Qt::red, Qt::white);
+    }
+    //其他
+    else
+    {
+        painter.drawLine(startX, startY, endX, startY);
+    }
+    pen.setWidth(2);
+    pen.setStyle(Qt::DashLine);
+    painter.setPen(pen);
+    // 绘制垂直线
     painter.drawLine(endX, startY, endX, startY + verticalLineLength);
 
     // 绘制系统电压
@@ -427,7 +477,7 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::red); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 水平线的起点是主接触器左侧圆弧
@@ -437,8 +487,16 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
     // 绘制垂直线
     int verticalLineLength = height() / 12;
     int verticalEndY = startY + verticalLineLength;
-    painter.drawLine(startX, startY, startX, verticalEndY);
-
+    //存在能量流动
+    if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
+    {
+        drawVerZigzagLine(painter, startX, startY + 5, startX, verticalEndY, Qt::red, Qt::white);
+    }
+    //其他
+    else
+    {
+        painter.drawLine(startX, startY, startX, verticalEndY);
+    }
     // 绘制加热故障接触器
     drawHeaterFaultContactor(painter, startX, verticalEndY, batteryWidth);
 }
@@ -490,7 +548,7 @@ void CircuitDiagramWidget2::drawWireToHeater(QPainter &painter, int heaterFaultC
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::red); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 垂直线的起点是加热故障接触器下侧圆弧
@@ -500,16 +558,21 @@ void CircuitDiagramWidget2::drawWireToHeater(QPainter &painter, int heaterFaultC
     // 计算垂直线的终点位置
     int verticalLineLength = height() / 6;
     int verticalEndY = startY + verticalLineLength;
-
-    // 绘制垂直线
-    painter.drawLine(startX, startY, startX, verticalEndY);
-
     // 水平线的长度
     int length = width() / 30; // 加热器的水平位置可以调整
 
-    // 绘制水平线
-    painter.drawLine(startX, verticalEndY, startX + length, verticalEndY);
-
+    if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
+    {
+        drawVerZigzagLine(painter, startX, startY, startX, verticalEndY, Qt::red, Qt::white);
+        drawHorZigzagLine(painter, startX, verticalEndY, startX + length, verticalEndY, Qt::red, Qt::white);
+    }
+    else
+    {
+        // 绘制垂直线
+        painter.drawLine(startX, startY, startX, verticalEndY);
+        // 绘制水平线
+        painter.drawLine(startX, verticalEndY, startX + length, verticalEndY);
+    }
     //绘制加热器
     drawHeater(painter, startX + length, verticalEndY - batteryWidth / 4, batteryWidth / 2);
 }
@@ -627,9 +690,15 @@ void CircuitDiagramWidget2::drawWireToHeaterContactor(QPainter &painter, int hea
     int verticalLineLength = height() / 12;
     int verticalEndY = startY + verticalLineLength;
 
-    // 绘制垂直线
-    painter.drawLine(startX, startY, startX, verticalEndY);
-
+    if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
+    {
+        drawVerZigzagLine(painter, startX, startY, startX, verticalEndY, Qt::black, Qt::white);
+    }
+    else
+    {
+        // 绘制垂直线
+        painter.drawLine(startX, startY, startX, verticalEndY);
+    }
     // 在垂直线末端绘制加热接触器
     drawHeaterContactor(painter, startX, verticalEndY);
 }
@@ -670,7 +739,16 @@ void CircuitDiagramWidget2::drawHeaterContactor(QPainter &painter, int x, int y)
     }
     painter.drawLine(line);
     int length = height() / 2 - 4 - width() * 3 / 20;
-    painter.drawLine(x, y + centerDistance + 4, x, y + centerDistance + length);
+    pen.setWidth(5);
+    painter.setPen(pen);
+    if((m_state == 1 || m_state == 2) && m_heaterFaultContactorClosed && m_heaterContactorClosed)
+    {
+        drawVerZigzagLine(painter, x, y + centerDistance + 4 + 2, x, y + centerDistance + length - 4, Qt::black, Qt::white);
+    }
+    else
+    {
+       painter.drawLine(x, y + centerDistance + 4 + 2, x, y + centerDistance + length - 5);
+    }
 }
 
 void CircuitDiagramWidget2::drawSystemVoltage(QPainter &painter, int startX, int startY)
@@ -705,7 +783,7 @@ void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int 
 {
     // 设置画笔颜色
     QPen pen(Qt::black);
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 垂直线的终点
@@ -714,11 +792,28 @@ void CircuitDiagramWidget2::drawWireToDischargeContactor(QPainter &painter, int 
     // 水平线的终点
     int horizontalEndX = mianContactorStartX;
 
+    //充电
+    if(m_state == 1)
+    {
+        drawHorLeftZigzagLine(painter, startX, verticalEndY, horizontalEndX, verticalEndY, Qt::black, Qt::white);
+    }
+    //放电
+    else if(m_state == 2)
+    {
+        drawHorZigzagLine(painter, startX, verticalEndY, horizontalEndX, verticalEndY, Qt::black, Qt::white);
+    }
+    //其他情况
+    else
+    {
+        // 绘制水平向右的线
+        painter.drawLine(startX, verticalEndY, horizontalEndX, verticalEndY);
+    }
+
+    pen.setWidth(2);
+    pen.setStyle(Qt::DashLine); // 使用虚线样式
+    painter.setPen(pen);
     // 绘制从系统电压下方圆弧垂直向下的线
     painter.drawLine(startX, startY, startX, verticalEndY);
-
-    // 绘制水平向右的线
-    painter.drawLine(startX, verticalEndY, horizontalEndX, verticalEndY);
 
     // 绘制放电接触器
     drawDischargeContactor(painter, horizontalEndX, verticalEndY, width() / 5);
@@ -775,7 +870,7 @@ void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int di
     painter.setWindow(0, 0, width(), height());
 
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 获取连接放电接触器和充电接触器的线的中点坐标
@@ -786,12 +881,26 @@ void CircuitDiagramWidget2::drawWireToLimitedContactor(QPainter &painter, int di
     int verticalLineLength = height() / 6;
     int verticalEndY = midY - verticalLineLength;
 
-    // 绘制从中点到垂直向上的线
-    painter.drawLine(midX, midY, midX, verticalEndY);
-
-    // 绘制水平向右的线，直到充电接触器的x坐标
-    painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
-
+    //充电
+    if(m_state == 1 && !m_chargeContactorClosed && m_limitedContactorClosed)
+    {
+        drawHorLeftZigzagLine(painter, midX, verticalEndY, chargeContactorX, verticalEndY, Qt::black, Qt::white);
+        drawVerZigzagLine(painter, midX, midY, midX, verticalEndY, Qt::black, Qt::white);
+    }
+    //放电
+    else if (m_state == 2 && !m_chargeContactorClosed && m_limitedContactorClosed)
+    {
+        drawHorZigzagLine(painter, midX, verticalEndY, chargeContactorX, verticalEndY, Qt::black, Qt::white);
+        drawVerUpZigzagLine(painter, midX, midY, midX, verticalEndY, Qt::black, Qt::white);
+    }
+    //其他
+    else
+    {
+        // 绘制从中点到垂直向上的线
+        painter.drawLine(midX, midY, midX, verticalEndY);
+        // 绘制水平向右的线，直到充电接触器的x坐标
+        painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
+    }
     //绘制limited接触器
     drawLimitedContactor(painter, chargeContactorX, verticalEndY);
 }
@@ -846,7 +955,7 @@ void CircuitDiagramWidget2::drawWireToChargeContactor(QPainter &painter, int sta
 {
     // 设置画笔颜色
     QPen pen(Qt::black); // 导线颜色
-    pen.setWidth(2);
+    pen.setWidth(5);
     painter.setPen(pen);
 
     // 水平线长度为画布宽度的1/20
@@ -857,8 +966,21 @@ void CircuitDiagramWidget2::drawWireToChargeContactor(QPainter &painter, int sta
     int horizontalLineEndY = startY;
 
     // 绘制水平线
-    painter.drawLine(startX, startY, horizontalLineEndX, horizontalLineEndY);
-
+    //充电
+    if(m_state == 1 && m_chargeContactorClosed)
+    {
+        drawHorLeftZigzagLine(painter, startX, startY, horizontalLineEndX, horizontalLineEndY, Qt::black, Qt::white);
+    }
+    //放电
+    else if (m_state == 2 && m_chargeContactorClosed)
+    {
+        drawHorZigzagLine(painter, startX, startY, horizontalLineEndX, horizontalLineEndY, Qt::black, Qt::white);
+    }
+    //其他
+    else
+    {
+        painter.drawLine(startX, startY, horizontalLineEndX, horizontalLineEndY);
+    }
     // 放电接触器的位置 (相对电池)
     int chargeContactorX = horizontalLineEndX;
     int chargeContactorY = horizontalLineEndY;
@@ -926,21 +1048,38 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
 
     // 垂直线长度为电池高度的1/4
     int verticalLineLength = batteryHeight / 4;
-
-    // 绘制从电池负极向上垂直线
-    painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
-
     // 水平向右的部分，长度为画布宽度的1/20
     int horizontalLineLength = width() / 10;
     int horizontalEndX = batteryNegPosX + horizontalLineLength;
-    painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
-
     // 垂直向下的部分，长度为画布高度的5/6
     int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6;
-    painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
 
-    //绘制与充电接触器相连的电线
-    painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY);
+    // 绘制从电池负极向上垂直线
+    //充电
+    if(m_state == 1)
+    {
+        drawVerUpZigzagLine(painter, batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
+        drawHorZigzagLine(painter, batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
+        drawVerZigzagLine(painter, horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY, Qt::black, Qt::white);
+        drawHorLeftZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY, Qt::black, Qt::white);
+    }
+    //放电
+    else if (m_state == 2)
+    {
+        drawVerZigzagLine(painter, batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
+        drawHorLeftZigzagLine(painter, batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength, Qt::black, Qt::white);
+        drawVerUpZigzagLine(painter, horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY, Qt::black, Qt::white);
+        drawHorZigzagLine(painter, horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY, Qt::black, Qt::white);
+    }
+    else
+    {
+        painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
+        painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
+        painter.drawLine(horizontalEndX, batteryNegPosY - verticalLineLength, horizontalEndX, verticalEndY);
+        //绘制与充电接触器相连的电线
+        painter.drawLine(horizontalEndX, verticalEndY, chargeContactorEndx, verticalEndY);
+    }
+
 }
 
 
@@ -1085,3 +1224,312 @@ void CircuitDiagramWidget2::resizeEvent(QResizeEvent *event)
 
     QWidget::resizeEvent(event);
 }
+
+void CircuitDiagramWidget2::drawHorZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor)
+{
+    //水平向右，确保从左边开始
+    if(startX > endX)
+    {
+        int tmp = startX;
+        startX = endX;
+        endX = tmp;
+    }
+
+    // 设置线条颜色
+    QPen pen(lineColor);
+    pen.setWidth(5);
+    painter.setPen(pen);
+
+    // 画一条水平线
+    painter.drawLine(startX, startY, endX, endY);
+
+    // 设置折线颜色
+    QPen stripePen(fillColor);
+    stripePen.setWidth(1);
+    painter.setPen(stripePen);
+
+    // 定义折线高度和间距
+    int stripeHeight = 5;  // 折线条纹的高度
+    int stripeSpacing = 5; // 同一组折线之间的间距
+    int groupSpacing = 10; // 折线组之间的间距
+    int currentStartX = startX + offset; // 根据偏移量更新起点X坐标
+
+    // 循环绘制多组折线
+    for (int i = 0; currentStartX + i * (2 * stripeSpacing + groupSpacing) < endX + offset; i++)
+    {
+        // 计算每组折线的起点
+        int baseX = currentStartX + i * (2 * stripeSpacing + groupSpacing);
+
+        // 检查折线是否会超出边界
+        if (baseX + 2 * stripeSpacing + stripeHeight > endX)
+            break; // 如果超出边界，停止绘制
+
+        // 第一条折线的点
+        QPoint points1[3] = {
+            QPoint(baseX, startY - 2),
+            QPoint(baseX + stripeHeight, startY),
+            QPoint(baseX, startY + 3)
+        };
+        painter.drawPolyline(points1, 3);
+
+        // 第二条折线的点
+        QPoint points2[3] = {
+            QPoint(baseX + stripeSpacing, startY - 2),
+            QPoint(baseX + stripeSpacing + stripeHeight, startY),
+            QPoint(baseX + stripeSpacing, startY + 3)
+        };
+        painter.drawPolyline(points2, 3);
+
+        // 使用 QPainterPath 创建填充区域，精确匹配两条折线的边界
+        QPainterPath fillPath;
+        fillPath.moveTo(points1[0]); // 第一条折线的起点
+        fillPath.lineTo(points1[1]); // 第一条折线的中点
+        fillPath.lineTo(points1[2]); // 第一条折线的终点
+        fillPath.lineTo(points2[2]); // 第二条折线的终点
+        fillPath.lineTo(points2[1]); // 第二条折线的中点
+        fillPath.lineTo(points2[0]); // 第二条折线的起点
+        fillPath.closeSubpath();     // 关闭路径
+
+        // 填充颜色为指定的填充颜色
+        painter.fillPath(fillPath, fillColor);
+
+        // 再次绘制折线条纹以确保线条清晰可见
+        painter.drawPolyline(points1, 3);
+        painter.drawPolyline(points2, 3);
+    }
+}
+
+
+void CircuitDiagramWidget2::drawVerZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor)
+{
+    //垂直向下，确保从上面开始
+    if(startY > endY)
+    {
+        int tmp = startY;
+        startY = endY;
+        endY = tmp;
+    }
+    // 设置线条颜色
+    QPen pen(lineColor);
+    pen.setWidth(5);
+    painter.setPen(pen);
+
+    // 画一条垂直线
+    painter.drawLine(startX, startY, endX, endY);
+
+    // 设置折线颜色
+    QPen stripePen(fillColor);
+    stripePen.setWidth(1);
+    painter.setPen(stripePen);
+
+    // 定义折线高度和间距
+    int stripeHeight = 5;  // 折线条纹的宽度（表现为水平宽度）
+    int stripeSpacing = 5; // 同一组折线之间的间距
+    int groupSpacing = 10; // 折线组之间的间距
+    int currentStartY = startY + offset; // 根据偏移量更新起点Y坐标
+
+    // 循环绘制多组折线
+    for (int i = 0; currentStartY + i * (2 * stripeSpacing + groupSpacing) < endY + offset; i++)
+    {
+        // 计算每组折线的起点
+        int baseY = currentStartY + i * (2 * stripeSpacing + groupSpacing);
+
+        // 检查折线是否会超出边界
+        if (baseY + 2 * stripeSpacing + stripeHeight > endY)
+            break; // 如果超出边界，停止绘制
+
+        // 第一条折线的点
+        QPoint points1[3] = {
+            QPoint(startX - 2, baseY),
+            QPoint(startX, baseY + stripeHeight),
+            QPoint(startX + 3, baseY)
+        };
+        painter.drawPolyline(points1, 3);
+
+        // 第二条折线的点
+        QPoint points2[3] = {
+            QPoint(startX - 2, baseY + stripeSpacing),
+            QPoint(startX, baseY + stripeSpacing + stripeHeight),
+            QPoint(startX + 3, baseY + stripeSpacing)
+        };
+        painter.drawPolyline(points2, 3);
+
+        // 使用 QPainterPath 创建填充区域，精确匹配两条折线的边界
+        QPainterPath fillPath;
+        fillPath.moveTo(points1[0]); // 第一条折线的起点
+        fillPath.lineTo(points1[1]); // 第一条折线的中点
+        fillPath.lineTo(points1[2]); // 第一条折线的终点
+        fillPath.lineTo(points2[2]); // 第二条折线的终点
+        fillPath.lineTo(points2[1]); // 第二条折线的中点
+        fillPath.lineTo(points2[0]); // 第二条折线的起点
+        fillPath.closeSubpath();     // 关闭路径
+
+        // 填充颜色为指定的填充颜色
+        painter.fillPath(fillPath, fillColor);
+
+        // 再次绘制折线条纹以确保线条清晰可见
+        painter.drawPolyline(points1, 3);
+        painter.drawPolyline(points2, 3);
+    }
+}
+
+
+void CircuitDiagramWidget2::drawHorLeftZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor)
+{
+    //水平向左，确保起点是从右边开始
+    if(startX < endX)
+    {
+        int tmp = endX;
+        endX = startX;
+        startX = tmp;
+    }
+    // 设置线条颜色
+    QPen pen(lineColor);
+    pen.setWidth(5);
+    painter.setPen(pen);
+
+    // 画一条水平线（向左）
+    painter.drawLine(startX, startY, endX, endY);
+
+    // 设置折线颜色
+    QPen stripePen(fillColor);
+    stripePen.setWidth(1);
+    painter.setPen(stripePen);
+
+    // 定义折线高度和间距
+    int stripeHeight = 5;  // 折线条纹的高度
+    int stripeSpacing = 5; // 同一组折线之间的间距
+    int groupSpacing = 10; // 折线组之间的间距
+    int currentStartX = startX - offset; // 根据偏移量更新起点X坐标
+
+    // 循环绘制多组折线
+    for (int i = 0; currentStartX - i * (2 * stripeSpacing + groupSpacing) > endX - offset; i++)
+    {
+        // 计算每组折线的起点
+        int baseX = currentStartX - i * (2 * stripeSpacing + groupSpacing);
+
+        // 检查折线是否会超出边界
+        if (baseX - 2 * stripeSpacing - stripeHeight < endX)
+            break; // 如果超出边界，停止绘制
+
+        // 第一条折线的点
+        QPoint points1[3] = {
+            QPoint(baseX, startY - 3),
+            QPoint(baseX - stripeHeight, startY),
+            QPoint(baseX, startY + 3)
+        };
+        painter.drawPolyline(points1, 3);
+
+        // 第二条折线的点
+        QPoint points2[3] = {
+            QPoint(baseX - stripeSpacing, startY - 3),
+            QPoint(baseX - stripeSpacing - stripeHeight, startY),
+            QPoint(baseX - stripeSpacing, startY + 3)
+        };
+        painter.drawPolyline(points2, 3);
+
+        // 使用 QPainterPath 创建填充区域，精确匹配两条折线的边界
+        QPainterPath fillPath;
+        fillPath.moveTo(points1[0]); // 第一条折线的起点
+        fillPath.lineTo(points1[1]); // 第一条折线的中点
+        fillPath.lineTo(points1[2]); // 第一条折线的终点
+        fillPath.lineTo(points2[2]); // 第二条折线的终点
+        fillPath.lineTo(points2[1]); // 第二条折线的中点
+        fillPath.lineTo(points2[0]); // 第二条折线的起点
+        fillPath.closeSubpath();     // 关闭路径
+
+        // 填充颜色为指定的填充颜色
+        painter.fillPath(fillPath, fillColor);
+
+        // 再次绘制折线条纹以确保线条清晰可见
+        painter.drawPolyline(points1, 3);
+        painter.drawPolyline(points2, 3);
+    }
+}
+
+
+void CircuitDiagramWidget2::drawVerUpZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor)
+{
+    //垂直向上，确保从下面开始
+    if(startY < endY)
+    {
+        int tmp = startY;
+        startY = endY;
+        endY = tmp;
+    }
+    // 设置线条颜色
+    QPen pen(lineColor);
+    pen.setWidth(5);
+    painter.setPen(pen);
+
+    // 画一条垂直线（向上）
+    painter.drawLine(startX, startY, endX, endY);
+
+    // 设置折线颜色
+    QPen stripePen(fillColor);
+    stripePen.setWidth(1);
+    painter.setPen(stripePen);
+
+    // 定义折线高度和间距
+    int stripeHeight = 5;  // 折线条纹的宽度（表现为水平宽度）
+    int stripeSpacing = 5; // 同一组折线之间的间距
+    int groupSpacing = 10; // 折线组之间的间距
+    int currentStartY = startY - offset; // 根据偏移量更新起点Y坐标
+
+    // 循环绘制多组折线
+    for (int i = 0; currentStartY - i * (2 * stripeSpacing + groupSpacing) > endY - offset; i++)
+    {
+        // 计算每组折线的起点
+        int baseY = currentStartY - i * (2 * stripeSpacing + groupSpacing);
+
+        // 检查折线是否会超出边界
+        if (baseY - 2 * stripeSpacing - stripeHeight < endY - stripeHeight)
+            break; // 如果超出边界，停止绘制
+
+        // 第一条折线的点
+        QPoint points1[3] = {
+            QPoint(startX - 2, baseY),
+            QPoint(startX, baseY - stripeHeight),
+            QPoint(startX + 3, baseY)
+        };
+        painter.drawPolyline(points1, 3);
+
+        // 第二条折线的点
+        QPoint points2[3] = {
+            QPoint(startX - 2, baseY - stripeSpacing),
+            QPoint(startX, baseY - stripeSpacing - stripeHeight),
+            QPoint(startX + 3, baseY - stripeSpacing)
+        };
+        painter.drawPolyline(points2, 3);
+
+        // 使用 QPainterPath 创建填充区域，精确匹配两条折线的边界
+        QPainterPath fillPath;
+        fillPath.moveTo(points1[0]); // 第一条折线的起点
+        fillPath.lineTo(points1[1]); // 第一条折线的中点
+        fillPath.lineTo(points1[2]); // 第一条折线的终点
+        fillPath.lineTo(points2[2]); // 第二条折线的终点
+        fillPath.lineTo(points2[1]); // 第二条折线的中点
+        fillPath.lineTo(points2[0]); // 第二条折线的起点
+        fillPath.closeSubpath();     // 关闭路径
+
+        // 填充颜色为指定的填充颜色
+        painter.fillPath(fillPath, fillColor);
+
+        // 再次绘制折线条纹以确保线条清晰可见
+        painter.drawPolyline(points1, 3);
+        painter.drawPolyline(points2, 3);
+    }
+}
+
+void CircuitDiagramWidget2::updatePosition()
+{
+    // 每次调用时偏移量增加，模拟向右移动的效果
+    offset += 2;
+    if (offset >= 20)  // 当偏移量达到一个周期长度后重置
+    {
+        offset = 0;
+    }
+
+    update();  // 触发重绘
+}
+

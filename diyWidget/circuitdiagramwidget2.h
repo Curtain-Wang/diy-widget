@@ -2,7 +2,8 @@
 #define CIRCUITDIAGRAMWIDGET2_H
 
 #include <QWidget>
-
+#include <QTimer>
+#include <QColor>
 class CircuitDiagramWidget2 : public QWidget
 {
     Q_OBJECT
@@ -24,6 +25,7 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
     Q_PROPERTY(quint8 language READ language WRITE setLanguage NOTIFY languageChanged)
+    Q_PROPERTY(quint8 state READ state WRITE setState NOTIFY stateChanged FINAL)
 
 public:
     explicit CircuitDiagramWidget2(QWidget *parent = nullptr);
@@ -79,6 +81,9 @@ public:
     quint8 language() const;
     void setLanguage(const quint8 &language);
 
+    quint8 state() const;
+    void setState(const quint8 &state);
+
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
@@ -103,6 +108,10 @@ public:
     void drawHeaterContactor(QPainter &painter, int x, int y);
     void drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX);
     void drawLimitedContactor(QPainter &painter, int x, int y);
+    void drawHorZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);  // 用于绘制水平折线
+    void drawVerZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);  // 用于绘制垂直折线
+    void drawHorLeftZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);  // 用于绘制水平向左的折线
+    void drawVerUpZigzagLine(QPainter &painter, int startX, int startY, int endX, int endY, const QColor &lineColor, const QColor &fillColor);
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -121,10 +130,12 @@ signals:
     void packColor5Changed(const QColor &color);
     void packColor6Changed(const QColor &color);
     void languageChanged(quint8 language);
+    void stateChanged(quint8 state);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
-
+private slots:
+    void updatePosition();  // 定时器槽函数，用于更新填充位置
 private:
     int m_chargeLevel;
     int m_warningLevel;
@@ -143,11 +154,15 @@ private:
     QColor m_packColor5;
     QColor m_packColor6;
     quint8 m_language;
+    //1-充电 2-放电 0-其他
+    quint8 m_state;
 
 private:
     int chargeContactorEndx;
     int offsetX;
     double mianContactorStartX;
+    QTimer *timer;  // 定时器指针
+    int offset;    // 用于控制填充区域的位置
 
     // QWidget interface
 protected:
