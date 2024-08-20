@@ -16,6 +16,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     mydial.cpp \
+    mywidget.cpp \
     tnewbattery.cpp \
     tscale.cpp
 
@@ -26,6 +27,7 @@ HEADERS += \
     heater.h \
     mainwindow.h \
     mydial.h \
+    mywidget.h \
     tnewbattery.h \
     tscale.h
 
