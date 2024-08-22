@@ -455,10 +455,10 @@ void CircuitDiagramWidget2::on_timer_timeout()
         {
             energyPositionList[i] += 5;
             if (!flag && energyPositionList[i] + ENERGY_BLOCK_WIDTH > horizontalEndX - chargeContactorEndx + width() * 11 / 12 + height() * 19 / 12 + 28) {
-                energyPositionList[i] = 0; // 循环能量块的位置
+                energyPositionList.remove(i);
             }
             if(flag && energyPositionList[i] + ENERGY_BLOCK_WIDTH > width() * 37/40 + height() * 23/12 + horizontalEndX - chargeContactorEndx + 28){
-                energyPositionList[i] = 0; // 循环能量块的位置
+                energyPositionList.remove(i);
             }
         }
     }
@@ -561,7 +561,7 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
     //绘制能量块，如果有的话
     for(int i = 0; i < energyPositionList.size(); i++)
     {
-        if(energyPositionList[i]  <= startLength - HALF_ENERGY_BLOCK_WIDTH || energyPositionList[i] > width() * 7 / 12 + 8 - HALF_ENERGY_BLOCK_WIDTH)
+        if(energyPositionList[i]  <= startLength - HALF_ENERGY_BLOCK_WIDTH || energyPositionList[i] > startLength + horizontalLineLength - HALF_ENERGY_BLOCK_WIDTH)
         {
             continue;
         }
@@ -573,7 +573,7 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
             drawGradientLineSegment(startX - length, startY, startX, startY, Qt::red, painter, colorAt);
         }
         //能量在水平线
-        else if (energyPositionList[i] + ENERGY_BLOCK_WIDTH <= horizontalLineLength)
+        else if (energyPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + horizontalLineLength)
         {
             int x = startX - (energyPositionList[i] - startLength);
             drawGradientLineSegment(x, startY, x - ENERGY_BLOCK_WIDTH, startY, Qt::red, painter);
@@ -582,7 +582,7 @@ void CircuitDiagramWidget2::drawWireToSystemVoltage(QPainter &painter, int mainC
         else
         {
             int positionInLine = energyPositionList[i] - startLength;
-            double colorAt = HALF_ENERGY_BLOCK_WIDTH / horizontalLineLength - positionInLine;
+            double colorAt = HALF_ENERGY_BLOCK_WIDTH / (horizontalLineLength - positionInLine);
             drawGradientLineSegment(startX - positionInLine, startY, endX, startY, Qt::red, painter, colorAt);
         }
     }
@@ -644,11 +644,12 @@ void CircuitDiagramWidget2::drawWireToHeaterFaultContactor(QPainter &painter, in
                 {
                     continue;
                 }
-                //能量在折线上
-                if(energyPositionList[i] <= startLength)
+                //能量冒头
+                if(energyPositionList[i] < startLength)
                 {
                     int positionInLine = energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength;
-                    drawGradientPolylineSegment(startX + (startLength - energyPositionList[i]), startY, startX, startY, startX, startY + positionInLine, Qt::red, painter);
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / positionInLine;
+                    drawGradientLineSegment(startX, startY + positionInLine, startX, startY, Qt::red, painter, colorAt);
                 }
                 //能量完全在垂线上
                 else if (energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength <= verticalLineLength)
