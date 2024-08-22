@@ -24,10 +24,11 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
     Q_PROPERTY(quint8 language READ language WRITE setLanguage NOTIFY languageChanged)
-    Q_PROPERTY(bool discharged READ discharged WRITE setDischarged NOTIFY dischargedChanged)
+    Q_PROPERTY(quint8 state READ state WRITE setState NOTIFY stateChanged FINAL)
 
 public:
     explicit CircuitDiagramWidget2(QWidget *parent = nullptr);
+    ~CircuitDiagramWidget2();
 
     int chargeLevel() const;
     void setChargeLevel(int level);
@@ -80,8 +81,8 @@ public:
     quint8 language() const;
     void setLanguage(const quint8 &language);
 
-    bool discharged() const;
-    void setDischarged(const bool &discharged);
+    quint8 state() const;
+    void setState(const quint8 &state);
 
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
@@ -111,10 +112,6 @@ public:
     void drawGradientLineSegment(int x1, int y1, int x2, int y2, Qt::GlobalColor edgeColor, QPainter &painter, double color2At = 0.5);
     //绘制渐变折线线段
     void drawGradientPolylineSegment(int x1, int y1, int x2, int y2, int x3, int y3, Qt::GlobalColor edgeColor, QPainter &painter);
-    //是否形成一个闭合回路
-    bool ifCloseLoop();
-    //定时器和能量块调整
-    void timerAndEnergyAdjust();
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -133,12 +130,13 @@ signals:
     void packColor5Changed(const QColor &color);
     void packColor6Changed(const QColor &color);
     void languageChanged(quint8 language);
-    void dischargedChanged(bool discharged);
+    void stateChanged(quint8 state);
 
 private slots:
     void on_timer_timeout();
 protected:
     void paintEvent(QPaintEvent *event) override;
+
 
 
 private:
@@ -159,22 +157,26 @@ private:
     QColor m_packColor5;
     QColor m_packColor6;
     quint8 m_language;
-    bool m_discharged;
+    //0其他1充电2放电
+    quint8 m_state;
 private:
     int chargeContactorEndx;
     int offsetX;
     double mianContactorStartX;
     double horizontalEndX;
-    int m_energyFlowPosition;
-    int m_chargeHeatEnergyFlowPosition = 0;
     Qt::GlobalColor energyColor;
-    int energyBlockWidth = 20; // 能量块的宽度
     // QWidget interface
     QTimer* timer;
+    //能量块的宽度
+    const int ENERGY_BLOCK_WIDTH = 20;
+    const double HALF_ENERGY_BLOCK_WIDTH = 10.0;
+    //充电开始位置
     const int CHARGE_START = 420;
+    //充电结束位置
     const int DISCHARGE_START = 0;
-    //连向放电开关的线的头部线段归属
-    bool wireToDischHeadflag = false;
+    //定时执行次数，每100次加一个能量块
+    int count = 0;
+    QList<quint32> energyPositionList;
 
 protected:
     void resizeEvent(QResizeEvent *event);

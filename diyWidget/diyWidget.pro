@@ -17,7 +17,8 @@ SOURCES += \
     mainwindow.cpp \
     mydial.cpp \
     tnewbattery.cpp \
-    tscale.cpp
+    tscale.cpp \
+    verticallinedrawer.cpp
 
 HEADERS += \
     circuitdiagramwidget.h \
@@ -27,7 +28,8 @@ HEADERS += \
     mainwindow.h \
     mydial.h \
     tnewbattery.h \
-    tscale.h
+    tscale.h \
+    verticallinedrawer.h
 
 FORMS += \
     mainwindow.ui
