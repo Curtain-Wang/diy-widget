@@ -174,8 +174,8 @@ private:
     const int CHARGE_START = 420;
     //充电结束位置
     const int DISCHARGE_START = 0;
-    //定时执行次数，每100次加一个能量块
-    int count = 0;
+    //定时执行次数，每20次加一个能量块
+    int count = 19;
     QList<quint32> energyPositionList;
 
 protected:
