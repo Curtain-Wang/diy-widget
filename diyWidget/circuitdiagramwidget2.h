@@ -113,6 +113,10 @@ public:
     void drawGradientLineSegment(int x1, int y1, int x2, int y2, Qt::GlobalColor edgeColor, QPainter &painter, double color2At = 0.5);
     //绘制渐变折线线段
     void drawGradientPolylineSegment(int x1, int y1, int x2, int y2, int x3, int y3, Qt::GlobalColor edgeColor, QPainter &painter);
+    void buildEnergyPositionListWithLimit();
+    void buildChargeHeatEnergyPositionList();
+    void buildEnergyPositionListWithCharge();
+    void adjustEnergyPosition();
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -177,8 +181,8 @@ private:
     const int DISCHARGE_START = 0;
     //定时执行次数，每20次加一个能量块
     int count = 19;
-    QList<quint32> energyPositionList;
-    QList<quint32> chargeHeatPositionList;
+    QList<qint32> energyPositionList;
+    QList<qint32> chargeHeatPositionList;
     //电池主体
     QRect rect;
 
