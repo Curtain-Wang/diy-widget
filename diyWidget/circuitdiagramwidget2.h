@@ -24,8 +24,9 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(QColor packColor4 READ packColor4 WRITE setPackColor4 NOTIFY packColor4Changed)
     Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
-    Q_PROPERTY(quint8 language READ language WRITE setLanguage NOTIFY languageChanged)
-    Q_PROPERTY(quint8 state READ state WRITE setState NOTIFY stateChanged FINAL)
+    Q_PROPERTY(int customLanguage READ customLanguage WRITE setCustomLanguage NOTIFY customLanguageChanged)
+    Q_PROPERTY(int componentState READ componentState WRITE setComponentState NOTIFY componentStateChanged)
+
 
 public:
     explicit CircuitDiagramWidget2(QWidget *parent = nullptr);
@@ -79,11 +80,11 @@ public:
     QColor packColor6() const;
     void setPackColor6(const QColor &color);
 
-    quint8 language() const;
-    void setLanguage(const quint8 &language);
+    int customLanguage() const;
+    void setCustomLanguage(int language);
 
-    quint8 state() const;
-    void setState(const quint8 &state);
+    int componentState() const;
+    void setComponentState(int state);
 
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
@@ -134,8 +135,8 @@ signals:
     void packColor4Changed(const QColor &color);
     void packColor5Changed(const QColor &color);
     void packColor6Changed(const QColor &color);
-    void languageChanged(quint8 language);
-    void stateChanged(quint8 state);
+    void customLanguageChanged(int language);
+    void componentStateChanged(int state);
 
 private slots:
     void on_timer_timeout();
@@ -161,9 +162,9 @@ private:
     QColor m_packColor4;
     QColor m_packColor5;
     QColor m_packColor6;
-    quint8 m_language;
+    int m_language;
     //0其他1充电2放电
-    quint8 m_state;
+    int m_state;
 private:
     int chargeContactorEndx;
     int offsetX;

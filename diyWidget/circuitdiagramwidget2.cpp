@@ -17,12 +17,12 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     , m_isHeating(true)
     , m_heaterContactorClosed(false)
     , m_limitedContactorClosed(false),
-    m_packColor1(Qt::gray),  // 初始化为灰色
-    m_packColor2(Qt::gray),  // 初始化为灰色
-    m_packColor3(Qt::gray),  // 初始化为灰色
-    m_packColor4(Qt::gray),  // 初始化为灰色
-    m_packColor5(Qt::gray),  // 初始化为灰色
-    m_packColor6(Qt::gray),   // 初始化为灰色
+    m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
+    m_packColor2(QColor("#d4d4d9")),  // 初始化为灰色
+    m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
+    m_packColor4(QColor("#d4d4d9")),  // 初始化为灰色
+    m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
+    m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
     m_language(2), //默认中文
     m_state(1)
 {
@@ -233,38 +233,38 @@ void CircuitDiagramWidget2::setPackColor6(const QColor &color) {
     }
 }
 
-quint8 CircuitDiagramWidget2::language() const
+int CircuitDiagramWidget2::customLanguage() const
 {
     return m_language;
 }
 
-void CircuitDiagramWidget2::setLanguage(const quint8 &language) {
+void CircuitDiagramWidget2::setCustomLanguage(const int language) {
     if (m_language != language) {
         m_language = language;
-        emit languageChanged(m_language);
+        emit customLanguageChanged(m_language);
         update(); // 更新界面以反映语言更改
     }
 }
 
-quint8 CircuitDiagramWidget2::state() const
+int CircuitDiagramWidget2::componentState() const
 {
     return m_state;
 }
 
-void CircuitDiagramWidget2::setState(const quint8 &state)
+void CircuitDiagramWidget2::setComponentState(const int state)
 {
     if(m_state != state)
     {
         energyPositionList.clear();
         m_state = state;
         adjustEnergyPosition();
-        emit stateChanged(m_state);
+        emit componentStateChanged(m_state);
         update();
     }
 }
 
 void CircuitDiagramWidget2::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
-    painter.setBrush(Qt::darkBlue);
+    painter.setBrush(QColor("#0000ff"));
     painter.drawRect(blueRect);
 
     QLinearGradient gradient(batteryRect.topLeft(), batteryRect.bottomLeft());
@@ -280,7 +280,7 @@ void CircuitDiagramWidget2::drawElectrodes(QPainter &painter, const QRect &batte
     int extension = electrodeWidth;
     QRect leftElectrode(batteryRect.left() + electrodeWidth * 0.5, batteryRect.top() - electrodeHeight - extension * 0.7, electrodeWidth, electrodeHeight);
     QRect rightElectrode(batteryRect.right() - electrodeWidth * 1.5, batteryRect.top() - electrodeHeight - extension * 0.7, electrodeWidth, electrodeHeight);
-    painter.setBrush(Qt::black);
+    painter.setBrush(QColor("#d4d4d9"));
     painter.drawRect(leftElectrode);
     painter.drawRect(rightElectrode);
 }
@@ -381,7 +381,7 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
     painter.setPen(pen);
 
     //垂直
-    painter.drawLine(batteryPosX, batteryPosY, batteryPosX, batteryPosY - verticalLineLength);
+    painter.drawLine(batteryPosX, batteryPosY - 2, batteryPosX, batteryPosY - verticalLineLength);
     //水平
     painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength, batteryPosY - verticalLineLength);
 
@@ -397,7 +397,7 @@ void CircuitDiagramWidget2::drawWireToMainContactor(QPainter &painter, int batte
         if(energyPositionList[i] < 0)
         {
             double colorAt = HALF_ENERGY_BLOCK_WIDTH / (energyPositionList[i] + ENERGY_BLOCK_WIDTH);
-            drawGradientLineSegment(batteryPosX, batteryPosY - energyPositionList[i] - ENERGY_BLOCK_WIDTH, batteryPosX, batteryPosY, Qt::red, painter, colorAt);
+            drawGradientLineSegment(batteryPosX, batteryPosY - energyPositionList[i] - ENERGY_BLOCK_WIDTH, batteryPosX, batteryPosY - 2, Qt::red, painter, colorAt);
         }
         //能量完全在垂直线段
         else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= verticalLineLength)
@@ -1826,7 +1826,7 @@ void CircuitDiagramWidget2::drawWireFromNegativeElectrode(QPainter &painter, int
     int verticalEndY = batteryNegPosY - verticalLineLength + height() * 5 / 6 - 2;
 
     // 绘制从电池负极向上垂直线
-    painter.drawLine(batteryNegPosX, batteryNegPosY, batteryNegPosX, batteryNegPosY - verticalLineLength);
+    painter.drawLine(batteryNegPosX, batteryNegPosY - 2, batteryNegPosX, batteryNegPosY - verticalLineLength);
     // 水平向右的部分，长度为画布宽度的1/20
     painter.drawLine(batteryNegPosX, batteryNegPosY - verticalLineLength, horizontalEndX, batteryNegPosY - verticalLineLength);
     // 垂直向下的部分，长度为画布高度的5/6

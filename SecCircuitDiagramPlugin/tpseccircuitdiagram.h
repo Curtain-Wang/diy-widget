@@ -3,7 +3,8 @@
 
 #include <QWidget>
 #include <QtUiPlugin/QDesignerExportWidget>
-
+class QTimer;
+class QRect;
 class QDESIGNER_WIDGET_EXPORT TPSecCircuitDiagram : public QWidget
 {
     Q_OBJECT
@@ -24,10 +25,13 @@ class QDESIGNER_WIDGET_EXPORT TPSecCircuitDiagram : public QWidget
     Q_PROPERTY(QColor packColor4 READ packColor4 WRITE setPackColor4 NOTIFY packColor4Changed)
     Q_PROPERTY(QColor packColor5 READ packColor5 WRITE setPackColor5 NOTIFY packColor5Changed)
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
-    Q_PROPERTY(quint8 language READ language WRITE setLanguage NOTIFY languageChanged)
+    Q_PROPERTY(int customLanguage READ customLanguage WRITE setCustomLanguage NOTIFY customLanguageChanged)
+    Q_PROPERTY(int componentState READ componentState WRITE setComponentState NOTIFY componentStateChanged)
+
 
 public:
     explicit TPSecCircuitDiagram(QWidget *parent = nullptr);
+    ~TPSecCircuitDiagram();
 
     int chargeLevel() const;
     void setChargeLevel(int level);
@@ -77,8 +81,11 @@ public:
     QColor packColor6() const;
     void setPackColor6(const QColor &color);
 
-    quint8 language() const;
-    void setLanguage(const quint8 &language);
+    int customLanguage() const;
+    void setCustomLanguage(int language);
+
+    int componentState() const;
+    void setComponentState(int state);
 
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
@@ -104,6 +111,14 @@ public:
     void drawHeaterContactor(QPainter &painter, int x, int y);
     void drawWireToLimitedContactor(QPainter &painter, int dischargeContactorX, int dischargeContactorY, int chargeContactorX);
     void drawLimitedContactor(QPainter &painter, int x, int y);
+    //绘制渐变直线线段
+    void drawGradientLineSegment(int x1, int y1, int x2, int y2, Qt::GlobalColor edgeColor, QPainter &painter, double color2At = 0.5);
+    //绘制渐变折线线段
+    void drawGradientPolylineSegment(int x1, int y1, int x2, int y2, int x3, int y3, Qt::GlobalColor edgeColor, QPainter &painter);
+    void buildEnergyPositionListWithLimit();
+    void buildChargeHeatEnergyPositionList();
+    void buildEnergyPositionListWithCharge();
+    void adjustEnergyPosition();
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);
@@ -121,10 +136,15 @@ signals:
     void packColor4Changed(const QColor &color);
     void packColor5Changed(const QColor &color);
     void packColor6Changed(const QColor &color);
-    void languageChanged(quint8 language);
+    void customLanguageChanged(int language);
+    void componentStateChanged(int state);
 
+private slots:
+    void on_timer_timeout();
 protected:
     void paintEvent(QPaintEvent *event) override;
+
+
 
 private:
     int m_chargeLevel;
@@ -143,14 +163,31 @@ private:
     QColor m_packColor4;
     QColor m_packColor5;
     QColor m_packColor6;
-    quint8 m_language;
-
+    int m_language;
+    //0其他1充电2放电
+    int m_state;
 private:
     int chargeContactorEndx;
     int offsetX;
     double mianContactorStartX;
-
+    double horizontalEndX;
+    Qt::GlobalColor energyColor;
     // QWidget interface
+    QTimer* timer;
+    //能量块的宽度
+    const int ENERGY_BLOCK_WIDTH = 20;
+    const double HALF_ENERGY_BLOCK_WIDTH = 10.0;
+    //充电开始位置
+    const int CHARGE_START = 420;
+    //充电结束位置
+    const int DISCHARGE_START = 0;
+    //定时执行次数，每20次加一个能量块
+    int count = 19;
+    QList<qint32> energyPositionList;
+    QList<qint32> chargeHeatPositionList;
+    //电池主体
+    QRect rect;
+
 protected:
     void resizeEvent(QResizeEvent *event);
 };
