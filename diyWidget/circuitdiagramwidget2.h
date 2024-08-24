@@ -3,6 +3,7 @@
 
 #include <QWidget>
 class QTimer;
+class QRect;
 class CircuitDiagramWidget2 : public QWidget
 {
     Q_OBJECT
@@ -177,6 +178,9 @@ private:
     //定时执行次数，每20次加一个能量块
     int count = 19;
     QList<quint32> energyPositionList;
+    QList<quint32> chargeHeatPositionList;
+    //电池主体
+    QRect rect;
 
 protected:
     void resizeEvent(QResizeEvent *event);
