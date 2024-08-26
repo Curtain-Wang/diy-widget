@@ -174,14 +174,14 @@ private:
     // QWidget interface
     QTimer* timer;
     //能量块的宽度
-    const int ENERGY_BLOCK_WIDTH = 20;
-    const double HALF_ENERGY_BLOCK_WIDTH = 10.0;
+    const int ENERGY_BLOCK_WIDTH = 40;
+    const double HALF_ENERGY_BLOCK_WIDTH = 20.0;
     //充电开始位置
     const int CHARGE_START = 420;
     //充电结束位置
     const int DISCHARGE_START = 0;
     //定时执行次数，每20次加一个能量块
-    int count = 19;
+    int count = 9;
     QList<qint32> energyPositionList;
     QList<qint32> chargeHeatPositionList;
     //电池主体
