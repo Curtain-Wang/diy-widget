@@ -9,12 +9,12 @@
 TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
     : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
     , timer(new QTimer(this))
-    , m_mainContactorClosed(true)
+    , m_mainContactorClosed(false)
     , m_systemVoltage(0)
-    , m_dischargeContactorClosed(true)
-    , m_chargeContactorClosed(true)
-    , m_heaterFaultContactorClosed(true)
-    , m_isHeating(true)
+    , m_dischargeContactorClosed(false)
+    , m_chargeContactorClosed(false)
+    , m_heaterFaultContactorClosed(false)
+    , m_isHeating(false)
     , m_heaterContactorClosed(false)
     , m_limitedContactorClosed(false),
     m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
@@ -24,7 +24,7 @@ TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
     m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
     m_language(2), //默认中文
-    m_state(1)
+    m_state(0)
 {
     energyColor = Qt::white;
     setMinimumSize(200, 140);
@@ -264,36 +264,93 @@ void TPSecCircuitDiagram::setComponentState(const int state)
 }
 
 void TPSecCircuitDiagram::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
+    QPen pen = painter.pen();
+    pen.setBrush(QColor("#0000ff"));
+    painter.setPen(pen);
     painter.setBrush(QColor("#0000ff"));
     painter.drawRect(blueRect);
 
-    QLinearGradient gradient(batteryRect.topLeft(), batteryRect.bottomLeft());
-    gradient.setColorAt(0, Qt::white);
-    gradient.setColorAt(1, Qt::lightGray);
-    painter.setBrush(gradient);
+    // QLinearGradient gradient(batteryRect.topLeft(), batteryRect.bottomLeft());
+    // gradient.setColorAt(0, Qt::white);
+    // gradient.setColorAt(1, Qt::lightGray);
+    painter.setBrush(Qt::white);
     painter.drawRect(batteryRect);
+    pen.setBrush(Qt::black);
+    painter.setPen(pen);
+
+    //绘制电池状态
+    QString text;
+    if(m_state == 1)
+    {
+        text = "充电";
+    }
+    else if(m_state == 2)
+    {
+        text = "放电";
+    }
+    else if(m_state == 3)
+    {
+        text = "冷态";
+    }
+    else if(m_state == 4)
+    {
+        text = "静置";
+    }
+    else
+    {
+        text = "未知";
+    }
+    painter.drawText(batteryRect.center().x() - 17, batteryRect.top() - 50, text);
 }
 
 void TPSecCircuitDiagram::drawElectrodes(QPainter &painter, const QRect &batteryRect) {
-    int electrodeWidth = batteryRect.width() / 10;
+    int electrodeWidth = batteryRect.width() / 12;
     int electrodeHeight = batteryRect.height() / 5;
     int extension = electrodeWidth;
-    QRect leftElectrode(batteryRect.left() + electrodeWidth * 0.5, batteryRect.top() - electrodeHeight - extension * 0.7, electrodeWidth, electrodeHeight);
-    QRect rightElectrode(batteryRect.right() - electrodeWidth * 1.5, batteryRect.top() - electrodeHeight - extension * 0.7, electrodeWidth, electrodeHeight);
+    QRect leftElectrode(batteryRect.left() + electrodeWidth * 0.5 + 1, batteryRect.top() - electrodeHeight - extension * 0.7 - 2, electrodeWidth, electrodeHeight);
+    QRect rightElectrode(batteryRect.right() - electrodeWidth * 1.5 - 1, batteryRect.top() - electrodeHeight - extension * 0.7 - 2, electrodeWidth, electrodeHeight);
     painter.setBrush(QColor("#d4d4d9"));
     painter.drawRect(leftElectrode);
     painter.drawRect(rightElectrode);
+    // 设置字体和颜色
+    QFont font = painter.font();
+    int size = font.pointSize();
+    font.setPointSize(electrodeHeight * 0.8); // 根据电极高度调整字体大小
+    painter.setFont(font);
+
+    // 绘制B+文本（红色）
+    painter.setPen(Qt::red); // 设置画笔为红色
+    painter.drawText(leftElectrode.right() + 5, leftElectrode.center().y(), "B+"); // 在左电极右边画文本
+
+    // 绘制B-文本（默认黑色）
+    painter.setPen(Qt::black); // 设置画笔为黑色
+    painter.drawText(rightElectrode.left() - 20, rightElectrode.center().y(), "B-"); // 在右电极左边画文本
+    //还原字体大小
+    font.setPointSize(size);
+    painter.setFont(font);
+
 }
 
 void TPSecCircuitDiagram::drawTrapezoid(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
     QPointF upperPoints[4] = {
         QPointF(blueRect.left() - borderSize / 2, blueRect.top() - trapezoidHeight),
-        QPointF(blueRect.right() + borderSize / 2, blueRect.top() - trapezoidHeight),
-        QPointF(blueRect.right(), blueRect.top()),
+        QPointF(blueRect.right() + borderSize / 2 + 1, blueRect.top() - trapezoidHeight),
+        QPointF(blueRect.right() + 1, blueRect.top()),
         QPointF(blueRect.left(), blueRect.top())
     };
-    painter.setBrush(Qt::gray);
+    QPen pen = painter.pen();
+    pen.setBrush(QColor("#0000ff"));
+    painter.setPen(pen);
+    painter.setBrush(QColor("#0000ff"));
     painter.drawPolygon(upperPoints, 4);
+    pen.setBrush(Qt::black);
+    painter.setPen(pen);
+    int width = blueRect.right() + borderSize / 2 + 1 - (blueRect.left() - borderSize / 2);
+    painter.setBrush(Qt::gray);
+    painter.drawRect(blueRect.left() - borderSize / 2, blueRect.top() - trapezoidHeight - 5, width, 5);
+    painter.drawRect(blueRect.left() - borderSize / 2 + 3, blueRect.top() - trapezoidHeight - 10, width - 6, 5);
+    painter.drawRect(blueRect.left() - borderSize / 2 + 40, blueRect.top() - trapezoidHeight - 11, width - 80, 6);
+
 }
 
 void TPSecCircuitDiagram::drawBase(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
@@ -437,7 +494,7 @@ void TPSecCircuitDiagram::on_timer_timeout()
     bool flag = !m_chargeContactorClosed && m_limitedContactorClosed;
     count++;
     //每5S添加一个能量
-    if(count == 20)
+    if(count == 10)
     {
         count = 0;
         if(m_state == 2)
@@ -662,7 +719,7 @@ void TPSecCircuitDiagram::drawWireToHeaterFaultContactor(QPainter &painter, int 
                 //能量冒头
                 if(energyPositionList[i] < startLength)
                 {
-                    int positionInLine = energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength;
+                    int positionInLine = std::min<int>(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5);
                     double colorAt = HALF_ENERGY_BLOCK_WIDTH / positionInLine;
                     drawGradientLineSegment(startX, startY + positionInLine, startX, startY, Qt::red, painter, colorAt);
                 }
@@ -694,8 +751,8 @@ void TPSecCircuitDiagram::drawWireToHeaterFaultContactor(QPainter &painter, int 
                 //能量冒头
                 if(chargeHeatPositionList[i] < startLength)
                 {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength);
-                    drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, startX, startY, Qt::red, painter, colorAt);
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5);
+                    drawGradientLineSegment(startX, startY + std::min(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5), startX, startY, Qt::red, painter, colorAt);
                 }
                 //能量完全在垂线中
                 else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + verticalLineLength)
@@ -816,7 +873,7 @@ void TPSecCircuitDiagram::drawWireToHeater(QPainter &painter, int heaterFaultCon
                 //能量在折线中
                 else if (energyPositionList[i] <= startLength + verticalLineLength)
                 {
-                    int tmp = energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength - verticalLineLength;
+                    int tmp = std::min<int>(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength - verticalLineLength, length - 2);
                     drawGradientPolylineSegment(startX, startY + energyPositionList[i] - startLength, startX, verticalEndY, startX + tmp, verticalEndY, Qt::red, painter);
                 }
                 //能量完全在水平线中
@@ -857,7 +914,7 @@ void TPSecCircuitDiagram::drawWireToHeater(QPainter &painter, int heaterFaultCon
                 //能量在折线中
                 else if(chargeHeatPositionList[i] < startLength + verticalLineLength)
                 {
-                    drawGradientPolylineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, verticalEndY, startX + chargeHeatPositionList[i] - startLength - verticalLineLength + ENERGY_BLOCK_WIDTH, verticalEndY, Qt::red, painter);
+                    drawGradientPolylineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, verticalEndY, startX + std::min(chargeHeatPositionList[i] - startLength - verticalLineLength + ENERGY_BLOCK_WIDTH, length - 2), verticalEndY, Qt::red, painter);
                 }
                 //能量在水平线中
                 else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + verticalLineLength + length)
@@ -1022,8 +1079,8 @@ void TPSecCircuitDiagram::drawWireToHeaterContactor(QPainter &painter, int heate
                 //能量冒头
                 if(energyPositionList[i] <= startLength)
                 {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength);
-                    drawGradientLineSegment(startX, startY + energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, startX, startY, Qt::black, painter, colorAt);
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, verticalLineLength);
+                    drawGradientLineSegment(startX, startY + std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, verticalLineLength), startX, startY, Qt::black, painter, colorAt);
                 }
                 //能量完全在垂直线中
                 else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + verticalLineLength)
@@ -1037,8 +1094,6 @@ void TPSecCircuitDiagram::drawWireToHeaterContactor(QPainter &painter, int heate
                     double colorAt = HALF_ENERGY_BLOCK_WIDTH / (startLength + verticalLineLength - energyPositionList[i]);
                     drawGradientLineSegment(startX, startY + energyPositionList[i] - startLength, startX, verticalEndY, Qt::black, painter);
                 }
-
-
             }
         }
         //充电
@@ -1055,8 +1110,8 @@ void TPSecCircuitDiagram::drawWireToHeaterContactor(QPainter &painter, int heate
                 int positionInLine = chargeHeatPositionList[i] - startLength;
                 if(chargeHeatPositionList[i] < startLength)
                 {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (positionInLine + ENERGY_BLOCK_WIDTH);
-                    drawGradientLineSegment(startX, startY + positionInLine + ENERGY_BLOCK_WIDTH, startX, startY, Qt::black, painter, colorAt);
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(positionInLine + ENERGY_BLOCK_WIDTH, verticalLineLength);
+                    drawGradientLineSegment(startX, startY + std::min(positionInLine + ENERGY_BLOCK_WIDTH, verticalLineLength), startX, startY, Qt::black, painter, colorAt);
                 }
                 //能量完全在垂线中
                 else if(positionInLine + ENERGY_BLOCK_WIDTH <= verticalLineLength)
@@ -1148,8 +1203,8 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                 //能量冒头
                 if(energyPositionList[i] <= startLength)
                 {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength);
-                    drawGradientLineSegment(startX, startY + (energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength), startX, startY, Qt::black, painter, colorAt);
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, length - 4);
+                    drawGradientLineSegment(startX, startY + std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, length - 4), startX, startY, Qt::black, painter, colorAt);
                 }
                 //能量完全在垂线中
                 else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + length)
@@ -1182,8 +1237,8 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                 //能量冒头
                 if(chargeHeatPositionList[i] < startLength)
                 {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (positionInLine + ENERGY_BLOCK_WIDTH);
-                    drawGradientLineSegment(startX, startY + positionInLine + ENERGY_BLOCK_WIDTH, startX, startY, Qt::black, painter, colorAt);
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(positionInLine + ENERGY_BLOCK_WIDTH, length - 4);
+                    drawGradientLineSegment(startX, startY + std::min(positionInLine + ENERGY_BLOCK_WIDTH, length - 4), startX, startY, Qt::black, painter, colorAt);
                 }
                 //能量完全在垂线中
                 else if(positionInLine + ENERGY_BLOCK_WIDTH <= length)
@@ -1191,10 +1246,10 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                     drawGradientLineSegment(startX, startY + positionInLine, startX, startY + positionInLine + ENERGY_BLOCK_WIDTH, Qt::black, painter);
                 }
                 //能量在折线中
-                else
-                {
-                    drawGradientPolylineSegment(startX, startY + positionInLine, startX, startY + length, startX - (positionInLine + ENERGY_BLOCK_WIDTH - length), startY + length, Qt::black, painter);
-                }
+                // else
+                // {
+                //     drawGradientPolylineSegment(startX, startY + positionInLine, startX, startY + length, startX - (positionInLine + ENERGY_BLOCK_WIDTH - length), startY + length, Qt::black, painter);
+                // }
             }
         }
     }
@@ -1290,30 +1345,30 @@ void TPSecCircuitDiagram::drawWireToDischargeContactor(QPainter &painter, int st
         }
     }
     //从充电 加热线路过来的电流
-    if(m_heaterContactorClosed && m_heaterFaultContactorClosed && m_state == 1)
-    {
-        for(int i = 0; i < chargeHeatPositionList.size(); i++)
-        {
-            int startLength = width() * 3 / 40 + height() * 5 / 6 + 4;
-            int length = width() * 9 / 40 - startX;
-            int positionInLine = chargeHeatPositionList[i] - startLength;
-            if(chargeHeatPositionList[i] <= startLength || chargeHeatPositionList[i] >= startLength + length - HALF_ENERGY_BLOCK_WIDTH)
-            {
-                continue;
-            }
-            //能量块完全在水平线上
-            else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + length)
-            {
-                drawGradientLineSegment(startX + length - positionInLine, verticalEndY, startX + length - positionInLine - ENERGY_BLOCK_WIDTH, verticalEndY, Qt::black, painter);
-            }
-            //能量逐渐消散
-            else
-            {
-                double colorAt = HALF_ENERGY_BLOCK_WIDTH / (length - positionInLine);
-                drawGradientLineSegment(startX + length - positionInLine, verticalEndY, startX, verticalEndY, Qt::black, painter, colorAt);
-            }
-        }
-    }
+    // if(m_heaterContactorClosed && m_heaterFaultContactorClosed && m_state == 1)
+    // {
+    //     for(int i = 0; i < chargeHeatPositionList.size(); i++)
+    //     {
+    //         int startLength = width() * 3 / 40 + height() * 5 / 6 + 4;
+    //         int length = width() * 9 / 40 - startX;
+    //         int positionInLine = chargeHeatPositionList[i] - startLength;
+    //         if(chargeHeatPositionList[i] <= startLength || chargeHeatPositionList[i] >= startLength + length - HALF_ENERGY_BLOCK_WIDTH)
+    //         {
+    //             continue;
+    //         }
+    //         //能量块完全在水平线上
+    //         else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + length)
+    //         {
+    //             drawGradientLineSegment(startX + length - positionInLine, verticalEndY, startX + length - positionInLine - ENERGY_BLOCK_WIDTH, verticalEndY, Qt::black, painter);
+    //         }
+    //         //能量逐渐消散
+    //         else
+    //         {
+    //             double colorAt = HALF_ENERGY_BLOCK_WIDTH / (length - positionInLine);
+    //             drawGradientLineSegment(startX + length - positionInLine, verticalEndY, startX, verticalEndY, Qt::black, painter, colorAt);
+    //         }
+    //     }
+    // }
     // 绘制放电接触器
     drawDischargeContactor(painter, horizontalEndX, verticalEndY, width() / 5);
 }
@@ -1508,8 +1563,8 @@ void TPSecCircuitDiagram::drawLimitedContactor(QPainter &painter, int x, int y)
             //能量块从限流开关冒头
             if(energyPositionList[i] > startLength - HALF_ENERGY_BLOCK_WIDTH && energyPositionList[i] < startLength)
             {
-                double colorAt = HALF_ENERGY_BLOCK_WIDTH / (energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength);
-                drawGradientLineSegment(startX + (energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength), y, startX + 2, y, Qt::black, painter, colorAt);
+                double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, width() / 24 - 2);
+                drawGradientLineSegment(startX + std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, width() / 24 - 2), y, startX + 2, y, Qt::black, painter, colorAt);
             }
             //能量从在限流开关之后的水平线
             else if (energyPositionList[i] >= startLength + 2 && energyPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + width() / 24 - 2)
@@ -1527,7 +1582,7 @@ void TPSecCircuitDiagram::drawLimitedContactor(QPainter &painter, int x, int y)
             //能量从电阻冒头
             else if (energyPositionList[i] > startLength + width() / 8 - HALF_ENERGY_BLOCK_WIDTH && energyPositionList[i] <= startLength + width() / 8)
             {
-                int tmp = energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength - width() / 8;
+                int tmp = std::min(energyPositionList[i] + ENERGY_BLOCK_WIDTH - startLength - width() / 8, width() / 24);
                 double colorAt = HALF_ENERGY_BLOCK_WIDTH / tmp;
                 int x = startX + width() / 8;
                 drawGradientLineSegment(x + tmp, y, x, y, Qt::black, painter, colorAt);
@@ -1594,13 +1649,12 @@ void TPSecCircuitDiagram::drawGradientPolylineSegment(int x1, int y1, int x2, in
     pen.setBrush(gradient);
     painter.setPen(pen);
 
-    // 绘制能量块在垂直部分和水平部分的电线
-    QPainterPath path;
-    path.moveTo(x1, y1);
-    path.lineTo(x2, y2);
-    path.lineTo(x3, y3);
-    painter.drawPath(path);
-    pen.setColor(edgeColor); // 恢复原始颜色
+    // 绘制两条直线，避免填充三角形区域
+    painter.drawLine(x1, y1, x2, y2); // 绘制第一段
+    painter.drawLine(x2, y2, x3, y3); // 绘制第二段
+
+    // 恢复原始颜色的画笔
+    pen.setColor(edgeColor);
     painter.setPen(pen);
 }
 
@@ -1608,29 +1662,30 @@ void TPSecCircuitDiagram::buildEnergyPositionListWithLimit()
 {
     energyPositionList.clear();
     energyPositionList = {
-        486, 581, 681, 781, 881, 981, 1081,
-        1181, 1281, 1381, 1481, 95, 195, 295, 395
+        501, 546, 596, 646, 696, 746, 796,
+        846, 896, 946, 996, 1046, 1096, 1146,
+        1196, 1246, 1296, 1346, 1396, 1446, 10,
+        60, 110, 160, 210, 260, 310, 360, 410
     };
-
 }
 
 void TPSecCircuitDiagram::buildChargeHeatEnergyPositionList()
 {
     chargeHeatPositionList.clear();
     chargeHeatPositionList = {
-        420, 325, 225, 125, 25
+        445, 400, 350, 300, 250, 200, 150, 100, 50, 0
     };
-
 }
 
 void TPSecCircuitDiagram::buildEnergyPositionListWithCharge()
 {
     energyPositionList.clear();
     energyPositionList = {
-        473, 568, 668, 768, 868, 968, 1068,
-        1168, 1268, 1368, 90, 190, 290, 390
+        473, 518, 568, 618, 668, 718, 768,
+        818, 868, 918, 968, 1018, 1068, 1118,
+        1168, 1218, 1268, 1318, 1368, 40, 90,
+        140, 190, 240, 290, 340, 390
     };
-
 }
 
 void TPSecCircuitDiagram::adjustEnergyPosition()
@@ -1895,8 +1950,8 @@ void TPSecCircuitDiagram::drawWireFromNegativeElectrode(QPainter &painter, int b
             else if (positionInLine <= horizontalEndX - chargeContactorEndx + verticalEndY - (batteryNegPosY - verticalLineLength) + horizontalLineLength)
             {
                 positionInLine -= (horizontalEndX - chargeContactorEndx + verticalEndY - (batteryNegPosY - verticalLineLength));
-                int tmp = positionInLine + ENERGY_BLOCK_WIDTH - horizontalLineLength;
-                drawGradientPolylineSegment(horizontalEndX - positionInLine, batteryNegPosY - verticalLineLength, batteryNegPosX, batteryNegPosY - verticalLineLength, batteryNegPosX, batteryNegPosY - verticalLineLength + tmp, Qt::black, painter);
+                int tmp = std::min(positionInLine + ENERGY_BLOCK_WIDTH - horizontalLineLength, verticalLineLength - 2);
+                drawGradientPolylineSegment(horizontalEndX - positionInLine, batteryNegPosY - verticalLineLength, batteryNegPosX, batteryNegPosY - verticalLineLength, batteryNegPosX, batteryNegPosY - verticalLineLength + tmp > batteryNegPosY ? batteryNegPosY : batteryNegPosY - verticalLineLength + tmp, Qt::black, painter);
             }
             //能量在垂线中
             else if (positionInLine + ENERGY_BLOCK_WIDTH <= horizontalEndX - chargeContactorEndx + verticalEndY - (batteryNegPosY - verticalLineLength) + horizontalLineLength + verticalLineLength)
@@ -1947,22 +2002,23 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
     }
 
     // 计算电池相对于画布的间距
-    int verticalMargin = height() / 4;
+    int verticalMargin = height() / 4 + 5;
     int horizontalMargin = width() / 9;
 
     // 电池主体
     QRect batteryRect(width() - batteryWidth - horizontalMargin + offsetX, verticalMargin, batteryWidth, batteryHeight);
     rect = batteryRect;
     // 深蓝色长方形
-    int borderSize = batteryRect.width() / 20;
+    int borderSize = batteryRect.width() / 40;
     QRect blueRect(batteryRect.left() - borderSize, batteryRect.top() - borderSize, batteryRect.width() + borderSize * 2, batteryRect.height() + borderSize * 2);
+
+    // 绘制电池主体和梯形
+    drawBatteryBody(painter, batteryRect, blueRect);
+    drawTrapezoid(painter, blueRect, borderSize, batteryRect.height() / 20);
+    drawBase(painter, blueRect, borderSize, batteryRect.height() / 10);
 
     // 绘制电极
     drawElectrodes(painter, batteryRect);
-    // 绘制电池主体和梯形
-    drawBatteryBody(painter, batteryRect, blueRect);
-    drawTrapezoid(painter, blueRect, borderSize, batteryRect.height() / 10);
-    drawBase(painter, blueRect, borderSize, batteryRect.height() / 10);
 
     // 绘制充电百分比
     drawChargeLevel(painter, batteryRect);

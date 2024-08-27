@@ -9,14 +9,14 @@
 CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
     , timer(new QTimer(this))
-    , m_mainContactorClosed(true)
+    , m_mainContactorClosed(false)
     , m_systemVoltage(0)
-    , m_dischargeContactorClosed(true)
-    , m_chargeContactorClosed(true)
-    , m_heaterFaultContactorClosed(true)
-    , m_isHeating(true)
-    , m_heaterContactorClosed(true)
-    , m_limitedContactorClosed(true),
+    , m_dischargeContactorClosed(false)
+    , m_chargeContactorClosed(false)
+    , m_heaterFaultContactorClosed(false)
+    , m_isHeating(false)
+    , m_heaterContactorClosed(false)
+    , m_limitedContactorClosed(false),
     m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor2(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
@@ -24,7 +24,7 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
     m_language(2), //默认中文
-    m_state(2)
+    m_state(0)
 {
     energyColor = Qt::white;
     setMinimumSize(200, 140);
@@ -279,26 +279,28 @@ void CircuitDiagramWidget2::drawBatteryBody(QPainter &painter, const QRect &batt
     painter.setPen(pen);
 
     //绘制电池状态
+    QString text;
     if(m_state == 1)
     {
-      painter.drawText(batteryRect.center().x() - 15, batteryRect.top() - 50, "充电");
+        text = "充电";
     }
     else if(m_state == 2)
     {
-        painter.drawText(batteryRect.center().x() - 15, batteryRect.top() - 50, "放电");
+        text = "放电";
     }
     else if(m_state == 3)
     {
-        painter.drawText(batteryRect.center().x() - 15, batteryRect.top() - 50, "冷态");
+        text = "冷态";
     }
     else if(m_state == 4)
     {
-        painter.drawText(batteryRect.center().x() - 15, batteryRect.top() - 50, "静置");
+        text = "静置";
     }
     else
     {
-        painter.drawText(batteryRect.center().x() - 15, batteryRect.top() - 50, "未知");
+        text = "未知";
     }
+    painter.drawText(batteryRect.center().x() - 17, batteryRect.top() - 50, text);
 }
 
 void CircuitDiagramWidget2::drawElectrodes(QPainter &painter, const QRect &batteryRect) {
