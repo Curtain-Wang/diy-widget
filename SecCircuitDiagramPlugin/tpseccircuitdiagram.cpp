@@ -282,25 +282,31 @@ void TPSecCircuitDiagram::drawBatteryBody(QPainter &painter, const QRect &batter
     QString text;
     if(m_state == 1)
     {
-        text = "充电";
+        text = m_language == 2 ? "充电" : "Charge";
     }
     else if(m_state == 2)
     {
-        text = "放电";
+        text = m_language == 2 ? "放电" : "Discharge";
     }
     else if(m_state == 3)
     {
-        text = "冷态";
+        text = m_language == 2 ? "冷态" : "Cold";
     }
     else if(m_state == 4)
     {
-        text = "静置";
+        text = m_language == 2 ? "静置" : "Stand";
     }
     else
     {
-        text = "未知";
+        text = m_language == 2 ? "未知" : "Unkown";
     }
-    painter.drawText(batteryRect.center().x() - 17, batteryRect.top() - 50, text);
+    QFontMetrics metrics(painter.font());
+    int textWidth = metrics.horizontalAdvance(text); // 获取文本的宽度
+    // 计算文本开始绘制的 x 坐标，使文本居中
+    int x = batteryRect.center().x() - textWidth / 2;
+    int y = batteryRect.top() - 50; // y 坐标保持不变
+    // 绘制文本
+    painter.drawText(x, y, text);
 }
 
 void TPSecCircuitDiagram::drawElectrodes(QPainter &painter, const QRect &batteryRect) {
