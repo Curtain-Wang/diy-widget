@@ -357,16 +357,16 @@ void CircuitDiagramWidget2::drawTrapezoid(QPainter &painter, const QRect &blueRe
     painter.setBrush(Qt::gray);
     painter.drawRect(blueRect.left() - borderSize / 2, blueRect.top() - trapezoidHeight - 5, width, 5);
     painter.drawRect(blueRect.left() - borderSize / 2 + 3, blueRect.top() - trapezoidHeight - 10, width - 6, 5);
-    painter.drawRect(blueRect.left() - borderSize / 2 + 40, blueRect.top() - trapezoidHeight - 11, width - 80, 6);
+    painter.drawRect(blueRect.left() - borderSize / 2 + 43, blueRect.top() - trapezoidHeight - 11, width - 86, 6);
 
 }
 
 void CircuitDiagramWidget2::drawBase(QPainter &painter, const QRect &blueRect, int borderSize, int trapezoidHeight) {
     QPointF lowerPoints[6] = {
         QPointF(blueRect.left(), blueRect.bottom()),
-        QPointF(blueRect.right(), blueRect.bottom()),
-        QPointF(blueRect.right() + borderSize / 2, blueRect.bottom() + trapezoidHeight),
-        QPointF(blueRect.right() + borderSize / 2, blueRect.bottom() + trapezoidHeight * 1.5),
+        QPointF(blueRect.right() + 1, blueRect.bottom()),
+        QPointF(blueRect.right() + borderSize / 2 + 1, blueRect.bottom() + trapezoidHeight),
+        QPointF(blueRect.right() + borderSize / 2 + 1, blueRect.bottom() + trapezoidHeight * 1.5),
         QPointF(blueRect.left() - borderSize / 2, blueRect.bottom() + trapezoidHeight * 1.5),
         QPointF(blueRect.left() - borderSize / 2, blueRect.bottom() + trapezoidHeight)
     };
@@ -378,13 +378,22 @@ void CircuitDiagramWidget2::drawChargeLevel(QPainter &painter, const QRect &batt
     int chargeHeight = static_cast<int>((batteryRect.height() - 2) * (m_chargeLevel / 100.0));
     QRect chargeRect(batteryRect.left() + 1, batteryRect.bottom() - chargeHeight, batteryRect.width() - 2, chargeHeight);
 
-    if (m_chargeLevel < m_warningLevel) {
-        painter.setBrush(Qt::yellow);
+    QPen pen = painter.pen();
+    if(m_chargeLevel == 0){
+        painter.setBrush(Qt::white);
+        pen.setColor(Qt::white);
+    }
+    else if (m_chargeLevel < m_warningLevel) {
+        painter.setBrush(Qt::red);
+        pen.setColor(Qt::red);
     } else {
         painter.setBrush(Qt::green);
+        pen.setColor(Qt::green);
     }
+    painter.setPen(pen);
     painter.drawRect(chargeRect);
-
+    pen.setColor(Qt::black);
+    painter.setPen(pen);
     QFont font = painter.font();
     font.setPointSize(font.pointSize() * 1.5); // 调整字体大小（这里放大 1.5 倍）
     painter.setFont(font);
