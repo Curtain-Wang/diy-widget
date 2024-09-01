@@ -7,7 +7,7 @@
 #include <QResizeEvent>
 #include <QTimer>
 CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
-    : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
+    : QWidget(parent), m_chargeLevel(100), m_warningLevel(20)
     , timer(new QTimer(this))
     , m_mainContactorClosed(true)
     , m_systemVoltage(0)
@@ -16,7 +16,7 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     , m_heaterFaultContactorClosed(true)
     , m_isHeating(true)
     , m_heaterContactorClosed(true)
-    , m_limitedContactorClosed(true),
+    , m_limitedContactorClosed(false),
     m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor2(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
@@ -1803,6 +1803,10 @@ void CircuitDiagramWidget2::adjustEnergyPosition()
     }
     //加热
     else if(m_heaterContactorClosed && m_heaterFaultContactorClosed){
+        if(!timer->isActive())
+        {
+            timer->start();
+        }
         buildChargeHeatEnergyPositionList();
     }
     //不需要能量块

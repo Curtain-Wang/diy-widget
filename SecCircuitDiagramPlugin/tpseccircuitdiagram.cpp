@@ -9,14 +9,14 @@
 TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
     : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
     , timer(new QTimer(this))
-    , m_mainContactorClosed(false)
+    , m_mainContactorClosed(true)
     , m_systemVoltage(0)
-    , m_dischargeContactorClosed(false)
-    , m_chargeContactorClosed(false)
-    , m_heaterFaultContactorClosed(false)
-    , m_isHeating(false)
-    , m_heaterContactorClosed(false)
-    , m_limitedContactorClosed(false),
+    , m_dischargeContactorClosed(true)
+    , m_chargeContactorClosed(true)
+    , m_heaterFaultContactorClosed(true)
+    , m_isHeating(true)
+    , m_heaterContactorClosed(true)
+    , m_limitedContactorClosed(true),
     m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor2(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
@@ -24,14 +24,14 @@ TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
     m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
     m_language(2), //默认中文
-    m_state(0)
+    m_state(1)
 {
     energyColor = Qt::white;
     setMinimumSize(200, 140);
     timer->setInterval(50);
     connect(timer, &QTimer::timeout, this, &TPSecCircuitDiagram::on_timer_timeout);
     //有闭合回路才开启定时器
-    if(m_state == 1 || m_state == 2)
+    if(m_state == 1 || m_state == 2 || (m_heaterContactorClosed && m_heaterFaultContactorClosed))
     {
         timer->start();
     }
@@ -278,6 +278,7 @@ void TPSecCircuitDiagram::drawBatteryBody(QPainter &painter, const QRect &batter
     pen.setBrush(Qt::black);
     painter.setPen(pen);
 
+
     //绘制电池状态
     QString text;
     if(m_state == 1)
@@ -321,16 +322,17 @@ void TPSecCircuitDiagram::drawElectrodes(QPainter &painter, const QRect &battery
     // 设置字体和颜色
     QFont font = painter.font();
     int size = font.pointSize();
-    font.setPointSize(electrodeHeight * 0.8); // 根据电极高度调整字体大小
+    font.setBold(true);
+    font.setPointSize(electrodeHeight * 0.8 + 2); // 根据电极高度调整字体大小
     painter.setFont(font);
 
     // 绘制B+文本（红色）
     painter.setPen(Qt::red); // 设置画笔为红色
-    painter.drawText(leftElectrode.right() + 5, leftElectrode.center().y(), "B+"); // 在左电极右边画文本
+    painter.drawText(leftElectrode.right() + 5, leftElectrode.center().y() - 10, "B+"); // 在左电极右边画文本
 
     // 绘制B-文本（默认黑色）
     painter.setPen(Qt::black); // 设置画笔为黑色
-    painter.drawText(rightElectrode.left() - 20, rightElectrode.center().y(), "B-"); // 在右电极左边画文本
+    painter.drawText(rightElectrode.left() - 20, rightElectrode.center().y() - 10, "B-"); // 在右电极左边画文本
     //还原字体大小
     font.setPointSize(size);
     painter.setFont(font);
@@ -515,10 +517,13 @@ void TPSecCircuitDiagram::on_timer_timeout()
         if(m_state == 2)
         {
             energyPositionList.append(DISCHARGE_START);
-        }else
+        }else if(m_state == 1)
         {
             energyPositionList.append(CHARGE_START);
             chargeHeatPositionList.append(0);
+        }else if (m_heaterContactorClosed && m_heaterFaultContactorClosed)
+        {
+            chargeHeatPositionList.append(-HALF_ENERGY_BLOCK_WIDTH);
         }
     }
     //放电
@@ -536,7 +541,7 @@ void TPSecCircuitDiagram::on_timer_timeout()
         }
     }
     //充电
-    else
+    else if(m_state == 1)
     {
         //不经过加热电线的能量
         bool test = false;
@@ -564,6 +569,17 @@ void TPSecCircuitDiagram::on_timer_timeout()
         for (int i = 0; i < energyPositionList.size(); ++i) {
             // qDebug() << energyPositionList[i];
         }
+        //经过加热电线的能量
+        for (int i = 0; i < chargeHeatPositionList.size(); ++i) {
+            chargeHeatPositionList[i] += 5;
+            if(chargeHeatPositionList[i] > 451)
+            {
+                chargeHeatPositionList.remove(i);
+            }
+        }
+    }
+    //外部电源加热
+    else if(m_heaterContactorClosed && m_heaterFaultContactorClosed){
         //经过加热电线的能量
         for (int i = 0; i < chargeHeatPositionList.size(); ++i) {
             chargeHeatPositionList[i] += 5;
@@ -678,7 +694,7 @@ void TPSecCircuitDiagram::drawWireToSystemVoltage(QPainter &painter, int mainCon
     pen.setWidth(2);
     pen.setStyle(Qt::DashLine);
     painter.setPen(pen);
-    painter.drawLine(endX, startY, endX, startY + verticalLineLength);
+    painter.drawLine(endX + 5, startY, endX + 5, startY + verticalLineLength);
     pen.setStyle(Qt::SolidLine);
     // 绘制系统电压
     drawSystemVoltage(painter, endX, startY + verticalLineLength);
@@ -752,9 +768,8 @@ void TPSecCircuitDiagram::drawWireToHeaterFaultContactor(QPainter &painter, int 
 
             }
         }
-
-        //充电情况
-        if(m_state == 1)
+        //充电
+        else if(m_state == 1)
         {
             int startLength = width() * 11 / 120;
             for(int i = 0; i < chargeHeatPositionList.size(); i++)
@@ -763,23 +778,67 @@ void TPSecCircuitDiagram::drawWireToHeaterFaultContactor(QPainter &painter, int 
                 {
                     continue;
                 }
-                //能量冒头
-                if(chargeHeatPositionList[i] < startLength)
+                //线太短，直接画满
+                drawGradientLineSegment(startX, startY + 5, startX, verticalEndY, Qt::red, painter);
+                // //能量冒头
+                // if(chargeHeatPositionList[i] < startLength)
+                // {
+                //     double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5);
+                //     drawGradientLineSegment(startX, startY + std::min(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5), startX, startY, Qt::red, painter, colorAt);
+                // }
+                // //能量完全在垂线中
+                // else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + verticalLineLength)
+                // {
+                //     drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, startY + chargeHeatPositionList[i] - startLength + ENERGY_BLOCK_WIDTH, Qt::red, painter);
+                // }
+                // //能量进入开关
+                // else
+                // {
+                //     double colorAt = HALF_ENERGY_BLOCK_WIDTH / (startLength + verticalLineLength - chargeHeatPositionList[i]);
+                //     drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, verticalEndY, Qt::red, painter, colorAt);
+                // }
+            }
+        }
+        //外部电源加热
+        else
+        {
+            for(int i = 0; i < chargeHeatPositionList.size(); i++)
+            {
+                if(chargeHeatPositionList[i] <= -HALF_ENERGY_BLOCK_WIDTH || chargeHeatPositionList[i] >= width() * 11 / 120 + verticalLineLength - HALF_ENERGY_BLOCK_WIDTH)
                 {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / std::min(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5);
-                    drawGradientLineSegment(startX, startY + std::min(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - startLength, height() / 12 - 5), startX, startY, Qt::red, painter, colorAt);
+                    continue;
+                }
+                //能量冒头
+                if(chargeHeatPositionList[i] < 0){
+                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH);
+                    int x2 = startX - width() * 11 / 120;
+                    int x1 = startX - width() * 11 / 120 + chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH;
+                    drawGradientLineSegment(x1, startY, x2, startY, Qt::red, painter, colorAt);
+                }
+                //能量完全在水平线上
+                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= width() * 11 / 120)
+                {
+                    int x = startX - width() * 11 / 120 + chargeHeatPositionList[i];
+                    drawGradientLineSegment(x, startY, x + ENERGY_BLOCK_WIDTH, startY, Qt::red, painter);
+                }
+                //能量在折线中
+                else if(chargeHeatPositionList[i] < width() * 11 / 120)
+                {
+                    int x1 = startX - width() * 11 / 120 + chargeHeatPositionList[i];
+                    int y3 = startY + chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH - width() * 11 / 120;
+                    drawGradientPolylineSegment(x1, startY, startX, startY, startX, std::min(y3, startY + verticalLineLength), Qt::red, painter);
                 }
                 //能量完全在垂线中
-                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= startLength + verticalLineLength)
+                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= width() * 11 / 120 + verticalLineLength)
                 {
-                    drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, startY + chargeHeatPositionList[i] - startLength + ENERGY_BLOCK_WIDTH, Qt::red, painter);
+                    drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] - width() * 11 / 120, startX, startY + chargeHeatPositionList[i] - width() * 11 / 120 + ENERGY_BLOCK_WIDTH, Qt::red, painter);
                 }
-                //能量进入开关
-                else
-                {
-                    double colorAt = HALF_ENERGY_BLOCK_WIDTH / (startLength + verticalLineLength - chargeHeatPositionList[i]);
-                    drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, verticalEndY, Qt::red, painter, colorAt);
-                }
+                //能量进入开关 有bug
+                // else
+                // {
+                //     double colorAt = HALF_ENERGY_BLOCK_WIDTH / (startLength + verticalLineLength - chargeHeatPositionList[i]);
+                //     drawGradientLineSegment(startX, startY + chargeHeatPositionList[i] - startLength, startX, verticalEndY, Qt::red, painter, colorAt);
+                // }
             }
         }
     }
@@ -906,8 +965,8 @@ void TPSecCircuitDiagram::drawWireToHeater(QPainter &painter, int heaterFaultCon
                 }
             }
         }
-        //充电
-        if(m_state == 1)
+        //外部电源加热
+        else
         {
             int startLength = width() * 17 / 120 + height() / 12 + 8;
             for (int i = 0; i < chargeHeatPositionList.size(); ++i) {
@@ -989,16 +1048,17 @@ void TPSecCircuitDiagram::drawHeater(QPainter &painter, int x, int y, int side)
         wavePen.setWidth(2);
         painter.setPen(wavePen);
 
-        // 绘制波浪线
+        // 绘制平滑的螺旋线
         QPainterPath path;
         path.moveTo(lineX, waveStartY);
-        for (int posY = waveStartY; posY < waveEndY; posY += waveFrequency)
+        int waveAmplitude = 5; // 波浪线的幅度
+        double waveFrequency = 1; // 波浪线的频率
+
+        for (double posY = waveStartY; posY < waveEndY - 1; posY += 0.5)
         {
-            int nextY = posY + waveFrequency;
-            if (nextY > waveEndY) nextY = waveEndY;
-            path.cubicTo(lineX - waveHeight / 2, posY + waveFrequency / 2,
-                         lineX + waveHeight / 2, posY + waveFrequency / 2,
-                         lineX, nextY);
+            // 使用正弦函数来计算波浪的横向偏移
+            int offsetX = waveAmplitude * sin((posY - waveStartY) * waveFrequency);
+            path.lineTo(lineX + offsetX, posY);
         }
         painter.drawPath(path);
 
@@ -1111,8 +1171,8 @@ void TPSecCircuitDiagram::drawWireToHeaterContactor(QPainter &painter, int heate
                 }
             }
         }
-        //充电
-        if(m_state == 1)
+        //外部电源加热
+        else
         {
             int startLength = width() * 7 / 40 + height() / 4 + 8;
             for(int i = 0; i < chargeHeatPositionList.size(); i++)
@@ -1238,13 +1298,13 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
 
             }
         }
-        //充电
-        if(m_state == 1)
+        //外部电源加热
+        else
         {
             int startLength = width() * 9 / 40 + height() * 1 / 3 + 16;
             for(int i = 0; i < chargeHeatPositionList.size(); i++)
             {
-                if(chargeHeatPositionList[i] <= startLength - HALF_ENERGY_BLOCK_WIDTH || chargeHeatPositionList[i] >= startLength + length)
+                if(chargeHeatPositionList[i] <= startLength - HALF_ENERGY_BLOCK_WIDTH)
                 {
                     continue;
                 }
@@ -1261,10 +1321,23 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                     drawGradientLineSegment(startX, startY + positionInLine, startX, startY + positionInLine + ENERGY_BLOCK_WIDTH, Qt::black, painter);
                 }
                 //能量在折线中
-                // else
-                // {
-                //     drawGradientPolylineSegment(startX, startY + positionInLine, startX, startY + length, startX - (positionInLine + ENERGY_BLOCK_WIDTH - length), startY + length, Qt::black, painter);
-                // }
+                else if(positionInLine < length)
+                {
+                    //不充电的情况下，需要画最后的水平线
+                    if(m_state != 1)
+                    {
+                        drawGradientPolylineSegment(startX, startY + positionInLine, startX, startY + length + 1, startX - (positionInLine + ENERGY_BLOCK_WIDTH - length), startY + length + 1, Qt::black, painter);
+                    }
+                }
+                //能量完全在水平线中
+                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= 451)
+                {
+                    if(m_state != 1)
+                    {
+                        int x = startX - (positionInLine - length);
+                        drawGradientLineSegment(x, startY + length + 1, x - ENERGY_BLOCK_WIDTH, startY + length + 1, Qt::black, painter);
+                    }
+                }
             }
         }
     }
@@ -1310,8 +1383,8 @@ void TPSecCircuitDiagram::drawWireToDischargeContactor(QPainter &painter, int st
 {
     // 设置画笔颜色
     QPen pen(Qt::black);
-    pen.setStyle(Qt::DashLine);
     pen.setWidth(2);
+    pen.setStyle(Qt::DashLine);
     painter.setPen(pen);
 
     // 垂直线的终点
@@ -1321,8 +1394,7 @@ void TPSecCircuitDiagram::drawWireToDischargeContactor(QPainter &painter, int st
     int horizontalEndX = mianContactorStartX;
 
     // 绘制从系统电压下方圆弧垂直向下的线
-    painter.drawLine(startX, startY, startX, verticalEndY);
-
+    painter.drawLine(startX + 5, startY, startX + 5, verticalEndY);
     // 绘制水平向右的线
     pen.setWidth(5);
     pen.setStyle(Qt::SolidLine);
@@ -1688,7 +1760,7 @@ void TPSecCircuitDiagram::buildChargeHeatEnergyPositionList()
 {
     chargeHeatPositionList.clear();
     chargeHeatPositionList = {
-        445, 400, 350, 300, 250, 200, 150, 100, 50, 0
+        445, 400, 350, 300, 250, 200, 150, 100
     };
 }
 
@@ -1705,7 +1777,7 @@ void TPSecCircuitDiagram::buildEnergyPositionListWithCharge()
 
 void TPSecCircuitDiagram::adjustEnergyPosition()
 {
-    //需要初始化能量块的位置
+    //充放电
     if(m_state == 1 || m_state == 2)
     {
         if(!timer->isActive())
@@ -1728,6 +1800,14 @@ void TPSecCircuitDiagram::adjustEnergyPosition()
         {
             chargeHeatPositionList.clear();
         }
+    }
+    //加热
+    else if(m_heaterContactorClosed && m_heaterFaultContactorClosed){
+        if(!timer->isActive())
+        {
+            timer->start();
+        }
+        buildChargeHeatEnergyPositionList();
     }
     //不需要能量块
     else
