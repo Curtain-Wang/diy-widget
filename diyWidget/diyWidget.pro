@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     circuitdiagramwidget.cpp \
+    circuitdiagramwidget1109.cpp \
     circuitdiagramwidget2.cpp \
     customline.cpp \
     heater.cpp \
@@ -22,6 +23,7 @@ SOURCES += \
 
 HEADERS += \
     circuitdiagramwidget.h \
+    circuitdiagramwidget1109.h \
     circuitdiagramwidget2.h \
     customline.h \
     heater.h \
