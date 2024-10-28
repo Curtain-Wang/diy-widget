@@ -87,7 +87,7 @@ public:
     void setComponentState(int state);
 
 
-    void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
+    void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight, bool isSec = false);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
     void drawWireToSystemVoltage(QPainter &painter, int mainContactorX, int mainContactorY, int batteryWidth);
     void drawSystemVoltage(QPainter &painter, int startX, int startY);
@@ -119,6 +119,8 @@ public:
     void buildChargeHeatEnergyPositionList();
     void buildEnergyPositionListWithCharge();
     void adjustEnergyPosition();
+    //绘制串电压
+    void drawSeriesVoltage(QPainter &painter,int n);
 signals:
     void chargeLevelChanged(int level);
     void warningLevelChanged(int level);

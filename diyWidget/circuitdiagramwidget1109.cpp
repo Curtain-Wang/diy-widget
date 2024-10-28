@@ -422,7 +422,7 @@ void CircuitDiagramWidget1109::drawChargeLevel(QPainter &painter, const QRect &b
  * @param batteryWidth
  * @param batteryHeight
  */
-void CircuitDiagramWidget1109::drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight)
+void CircuitDiagramWidget1109::drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight, bool isSec)
 {
     // 还原视口和窗口设置，以绘制其他部分
     painter.setViewport(0, 0,747,305);
@@ -456,53 +456,61 @@ void CircuitDiagramWidget1109::drawWireToMainContactor(QPainter &painter, int ba
 
     //垂直
     painter.drawLine(batteryPosX, batteryPosY - 2, batteryPosX, batteryPosY - verticalLineLength);
-    //水平
-    painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength, batteryPosY - verticalLineLength);
 
-    //绘制能量块，如果有的话
-    for(int i = 0; i < energyPositionList.size(); i++)
+    if(!isSec)
     {
-        //该能量不在这段
-        if(energyPositionList[i] >= verticalLineLength + horizontalLineLength -HALF_ENERGY_BLOCK_WIDTH || energyPositionList[i] <= -HALF_ENERGY_BLOCK_WIDTH)
+        //水平
+        painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength, batteryPosY - verticalLineLength);
+        //绘制能量块，如果有的话
+        for(int i = 0; i < energyPositionList.size(); i++)
         {
-            continue;
+            //该能量不在这段
+            if(energyPositionList[i] >= verticalLineLength + horizontalLineLength -HALF_ENERGY_BLOCK_WIDTH || energyPositionList[i] <= -HALF_ENERGY_BLOCK_WIDTH)
+            {
+                continue;
+            }
+            //能量冒头
+            if(energyPositionList[i] < 0)
+            {
+                double colorAt = HALF_ENERGY_BLOCK_WIDTH / (energyPositionList[i] + ENERGY_BLOCK_WIDTH);
+                drawGradientLineSegment(batteryPosX, batteryPosY - energyPositionList[i] - ENERGY_BLOCK_WIDTH, batteryPosX, batteryPosY - 2, Qt::red, painter, colorAt);
+            }
+            //能量完全在垂直线段
+            else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= verticalLineLength)
+            {
+                drawGradientLineSegment(batteryPosX, batteryPosY - energyPositionList[i], batteryPosX, batteryPosY - energyPositionList[i] - ENERGY_BLOCK_WIDTH, Qt::red, painter);
+            }
+            //能量在折线处
+            else if(energyPositionList[i] < verticalLineLength)
+            {
+                int length = energyPositionList[i] + ENERGY_BLOCK_WIDTH - verticalLineLength;
+                drawGradientPolylineSegment(batteryPosX, batteryPosY - energyPositionList[i], batteryPosX, batteryPosY - verticalLineLength, batteryPosX - length, batteryPosY - verticalLineLength, Qt::red, painter);
+            }
+            //能量在水平线处
+            else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= verticalLineLength + horizontalLineLength)
+            {
+                int startX = batteryPosX - (energyPositionList[i] - verticalLineLength);
+                drawGradientLineSegment(startX, batteryPosY - verticalLineLength, startX - ENERGY_BLOCK_WIDTH, batteryPosY - verticalLineLength, Qt::red, painter);
+            }
+            //能量进入开关ing
+            else
+            {
+                int startX = batteryPosX - (energyPositionList[i] - verticalLineLength);
+                double colorAt = HALF_ENERGY_BLOCK_WIDTH / (horizontalLineLength + verticalLineLength - energyPositionList[i]);
+                drawGradientLineSegment(startX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength, batteryPosY - verticalLineLength, Qt::red, painter, colorAt);
+            }
         }
-        //能量冒头
-        if(energyPositionList[i] < 0)
-        {
-            double colorAt = HALF_ENERGY_BLOCK_WIDTH / (energyPositionList[i] + ENERGY_BLOCK_WIDTH);
-            drawGradientLineSegment(batteryPosX, batteryPosY - energyPositionList[i] - ENERGY_BLOCK_WIDTH, batteryPosX, batteryPosY - 2, Qt::red, painter, colorAt);
-        }
-        //能量完全在垂直线段
-        else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= verticalLineLength)
-        {
-            drawGradientLineSegment(batteryPosX, batteryPosY - energyPositionList[i], batteryPosX, batteryPosY - energyPositionList[i] - ENERGY_BLOCK_WIDTH, Qt::red, painter);
-        }
-        //能量在折线处
-        else if(energyPositionList[i] < verticalLineLength)
-        {
-            int length = energyPositionList[i] + ENERGY_BLOCK_WIDTH - verticalLineLength;
-            drawGradientPolylineSegment(batteryPosX, batteryPosY - energyPositionList[i], batteryPosX, batteryPosY - verticalLineLength, batteryPosX - length, batteryPosY - verticalLineLength, Qt::red, painter);
-        }
-        //能量在水平线处
-        else if(energyPositionList[i] + ENERGY_BLOCK_WIDTH <= verticalLineLength + horizontalLineLength)
-        {
-            int startX = batteryPosX - (energyPositionList[i] - verticalLineLength);
-            drawGradientLineSegment(startX, batteryPosY - verticalLineLength, startX - ENERGY_BLOCK_WIDTH, batteryPosY - verticalLineLength, Qt::red, painter);
-        }
-        //能量进入开关ing
-        else
-        {
-            int startX = batteryPosX - (energyPositionList[i] - verticalLineLength);
-            double colorAt = HALF_ENERGY_BLOCK_WIDTH / (horizontalLineLength + verticalLineLength - energyPositionList[i]);
-            drawGradientLineSegment(startX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength, batteryPosY - verticalLineLength, Qt::red, painter, colorAt);
-        }
+        // 绘制主接触器
+        drawMainContactor(painter, mainContactorX, mainContactorY, batteryWidth);
+        // 绘制从主接触器到系统电压的导线
+        drawWireToSystemVoltage(painter, mainContactorX, mainContactorY, batteryWidth);
+    }else//第二个电池
+    {
+        //水平
+        painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength + 30, batteryPosY - verticalLineLength);
+        //垂直
+        painter.drawLine(batteryPosX - horizontalLineLength + 30, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength + 30, 38 + 5);
     }
-    // 绘制主接触器
-    drawMainContactor(painter, mainContactorX, mainContactorY, batteryWidth);
-
-    // 绘制从主接触器到系统电压的导线
-    drawWireToSystemVoltage(painter, mainContactorX, mainContactorY, batteryWidth);
 }
 
 
@@ -1808,6 +1816,42 @@ void CircuitDiagramWidget1109::adjustEnergyPosition()
     }
 }
 
+void CircuitDiagramWidget1109::drawSeriesVoltage(QPainter &painter, int n)
+{
+    //绘制右侧的“串电压”和方框
+    painter.setPen(Qt::black);
+    int textX = 985 + 30 + (747 / 15 + 30) * (n - 1); // "串电压" 文字的X位置
+    int textY = 38; // "串电压" 文字的Y位置
+    QFont font = painter.font();
+    font.setPointSize(747 / 50);
+    painter.setFont(font);
+    if(m_language == 2)
+    {
+        painter.drawText(textX, textY, QString("串电压%1").arg(n));
+    }else{
+        painter.drawText(textX, textY, QString("pack V.%1").arg(n));
+    }
+
+    int rectWidth =747 / 15; // 方框的宽度
+    int rectHeight =305 / 10; // 方框的高度
+    int rectSpacing =305 / 40; // 方框之间的间距
+
+    QList<QColor> colors = {m_packColor1, m_packColor2, m_packColor3, m_packColor4, m_packColor5, m_packColor6};
+
+    for (int i = 1; i <= 6; ++i) {
+        painter.setPen(Qt::black);
+        painter.setBrush(colors[i - 1]);
+        int rectX = textX + rectWidth / 5; // 方框的X位置
+        int rectY = textY + rectSpacing * 2 + (i - 1) * (rectHeight + rectSpacing); // 方框的Y位置
+
+        // 绘制序号
+        painter.drawText(rectX - rectWidth / 2, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
+
+        // 绘制方框
+        painter.drawRect(rectX, rectY, rectWidth, rectHeight);
+    }
+}
+
 /**
  * 充电起点：width() * 7 / 12 +305 * 3 / 4 + 20
  * 长度：width() / 8 +747 / 24
@@ -1990,45 +2034,37 @@ void CircuitDiagramWidget1109::paintEvent(QPaintEvent *event) {
     font.setPointSize(747 / 60);
     font.setFamilies({"Arial", "Microsoft YaHei UI"});
     painter.setFont(font);
-
+    /******************************************绘制第一个电池******************************************/
     // 计算电池的宽度和高度，使其充满画布并保持2:1的比例
     int batteryWidth =747 * 0.2; // 占窗口宽度的20%
     int batteryHeight = batteryWidth / 2; // 保持2:1比例
-
     // 确保电池高度不会超过画布高度
     if (batteryHeight >305 * 0.4) { // 高度占画布的40%
         batteryHeight =305 * 0.4;
         batteryWidth = batteryHeight * 2;
     }
-
     // 计算电池相对于画布的间距
     int verticalMargin =305 / 4 + 5;
     int horizontalMargin =747 / 9;
-
     // 电池主体
     QRect batteryRect(747 - batteryWidth - horizontalMargin + offsetX, verticalMargin, batteryWidth, batteryHeight);
     rect = batteryRect;
     // 深蓝色长方形
     int borderSize = batteryRect.width() / 40;
     QRect blueRect(batteryRect.left() - borderSize, batteryRect.top() - borderSize, batteryRect.width() + borderSize * 2, batteryRect.height() + borderSize * 2);
-
     // 绘制电池主体和梯形
     drawBatteryBody(painter, batteryRect, blueRect);
     drawTrapezoid(painter, blueRect, borderSize, batteryRect.height() / 20);
     drawBase(painter, blueRect, borderSize, batteryRect.height() / 10);
-
     // 绘制电极
     drawElectrodes(painter, batteryRect);
-
     // 绘制充电百分比
     drawChargeLevel(painter, batteryRect);
-
     // 绘制从电池正极到主接触器的连接线
     drawWireToMainContactor(painter, batteryRect.x(), batteryRect.y(), batteryRect.width(), batteryRect.height());
     //绘制从电池负极出来的线
     drawWireFromNegativeElectrode(painter, rect.x(), rect.y(), rect.width(), rect.height());
-
-
+    /******************************************绘制第二个电池******************************************/
     //绘制第二个电池
     painter.setPen(borderPen);
     // 电池主体
@@ -2037,53 +2073,22 @@ void CircuitDiagramWidget1109::paintEvent(QPaintEvent *event) {
     // 深蓝色长方形
     borderSize = rect.width() / 40;
     QRect blueRect2(rect.left() - borderSize, rect.top() - borderSize, rect.width() + borderSize * 2, rect.height() + borderSize * 2);
-
     // 绘制电池主体和梯形
     drawBatteryBody(painter, rect, blueRect2);
     drawTrapezoid(painter, blueRect2, borderSize, rect.height() / 20);
     drawBase(painter, blueRect2, borderSize, rect.height() / 10);
-
     // 绘制电极
     drawElectrodes(painter, rect);
-
     // 绘制充电百分比
     drawChargeLevel(painter, rect);
+    // 绘制从电池正极到主接触器的连接线
+    drawWireToMainContactor(painter, batteryRect2.x(), batteryRect2.y(), batteryRect2.width(), batteryRect2.height(), true);
+    //绘制从电池负极出来的线
+    drawWireFromNegativeElectrode(painter, rect.x(), rect.y(), rect.width(), rect.height());
 
-
-
-
-
-    // 绘制右侧的“串电压”和方框
-    // painter.setPen(Qt::black);
-    // int textX = batteryRect.right() +747 / 15 +747 / 20; // "串电压" 文字的X位置
-    // int textY = batteryRect.top() -305 / 10; // "串电压" 文字的Y位置
-    // font.setPointSize(747 / 50);
-    // painter.setFont(font);
-    // if(m_language == 2)
-    // {
-    //     painter.drawText(textX, textY, tr("串电压"));
-    // }else{
-    //     painter.drawText(textX, textY, tr("pack V."));
-    // }
-
-    // int rectWidth =747 / 15; // 方框的宽度
-    // int rectHeight =305 / 10; // 方框的高度
-    // int rectSpacing =305 / 40; // 方框之间的间距
-
-    // QList<QColor> colors = {m_packColor1, m_packColor2, m_packColor3, m_packColor4, m_packColor5, m_packColor6};
-
-    // for (int i = 1; i <= 6; ++i) {
-    //     painter.setPen(Qt::black);
-    //     painter.setBrush(colors[i - 1]);
-    //     int rectX = textX + rectWidth / 5; // 方框的X位置
-    //     int rectY = textY + rectSpacing * 2 + (i - 1) * (rectHeight + rectSpacing); // 方框的Y位置
-
-    //     // 绘制序号
-    //     painter.drawText(rectX - rectWidth / 2, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
-
-    //     // 绘制方框
-    //     painter.drawRect(rectX, rectY, rectWidth, rectHeight);
-    // }
+    //绘制串电压
+    drawSeriesVoltage(painter, 1);
+    drawSeriesVoltage(painter, 2);
 }
 
 void CircuitDiagramWidget1109::resizeEvent(QResizeEvent *event)
