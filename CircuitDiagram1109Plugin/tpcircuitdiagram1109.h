@@ -211,8 +211,8 @@ private:
     QList<qint32> fromPositive2;
 
 
-protected:
-    void resizeEvent(QResizeEvent *event);
+// protected:
+//     void resizeEvent(QResizeEvent *event);
 };
 
 #endif // TPCIRCUITDIAGRAM1109_H
