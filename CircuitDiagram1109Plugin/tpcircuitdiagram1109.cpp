@@ -2006,58 +2006,58 @@ void TPCircuitDiagram1109::paintEvent(QPaintEvent *event) {
     drawSeriesVoltage(painter, 2);
 }
 
-void TPCircuitDiagram1109::resizeEvent(QResizeEvent *event)
-{
-    // 目标宽高比
-    const float aspectRatio = 746.0f / 305.0f;
+// void TPCircuitDiagram1109::resizeEvent(QResizeEvent *event)
+// {
+//     // 目标宽高比
+//     const float aspectRatio = 746.0f / 305.0f;
 
-    // 获取当前尺寸
-    int currentWidth = event->size().width();
-    int currentHeight = event->size().height();
+//     // 获取当前尺寸
+//     int currentWidth = event->size().width();
+//     int currentHeight = event->size().height();
 
-    // 计算基于宽度和高度的目标尺寸
-    int newHeightBasedOnWidth = static_cast<int>(currentWidth / aspectRatio);
-    int newWidthBasedOnHeight = static_cast<int>(currentHeight * aspectRatio);
+//     // 计算基于宽度和高度的目标尺寸
+//     int newHeightBasedOnWidth = static_cast<int>(currentWidth / aspectRatio);
+//     int newWidthBasedOnHeight = static_cast<int>(currentHeight * aspectRatio);
 
-    int finalWidth, finalHeight;
+//     int finalWidth, finalHeight;
 
-    // 根据最小差值选择调整方式并计算最终的尺寸
-    if (abs(newHeightBasedOnWidth - currentHeight) < abs(newWidthBasedOnHeight - currentWidth)) {
-        finalWidth = currentWidth;
-        finalHeight = newHeightBasedOnWidth;
-    } else {
-        finalWidth = newWidthBasedOnHeight;
-        finalHeight = currentHeight;
-    }
+//     // 根据最小差值选择调整方式并计算最终的尺寸
+//     if (abs(newHeightBasedOnWidth - currentHeight) < abs(newWidthBasedOnHeight - currentWidth)) {
+//         finalWidth = currentWidth;
+//         finalHeight = newHeightBasedOnWidth;
+//     } else {
+//         finalWidth = newWidthBasedOnHeight;
+//         finalHeight = currentHeight;
+//     }
 
-    // 获取最小和最大尺寸
-    QSize minSize = minimumSize();
-    QSize maxSize = maximumSize();
+//     // 获取最小和最大尺寸
+//     QSize minSize = minimumSize();
+//     QSize maxSize = maximumSize();
 
-    // 调整最终尺寸以确保不超出最大和最小尺寸限制
-    if (finalWidth < minSize.width()) {
-        finalWidth = minSize.width();
-        finalHeight = static_cast<int>(finalWidth / aspectRatio);
-    }
-    if (finalHeight < minSize.height()) {
-        finalHeight = minSize.height();
-        finalWidth = static_cast<int>(finalHeight * aspectRatio);
-    }
+//     // 调整最终尺寸以确保不超出最大和最小尺寸限制
+//     if (finalWidth < minSize.width()) {
+//         finalWidth = minSize.width();
+//         finalHeight = static_cast<int>(finalWidth / aspectRatio);
+//     }
+//     if (finalHeight < minSize.height()) {
+//         finalHeight = minSize.height();
+//         finalWidth = static_cast<int>(finalHeight * aspectRatio);
+//     }
 
-    if (finalWidth > maxSize.width()) {
-        finalWidth = maxSize.width();
-        finalHeight = static_cast<int>(finalWidth / aspectRatio);
-    }
-    if (finalHeight > maxSize.height()) {
-        finalHeight = maxSize.height();
-        finalWidth = static_cast<int>(finalHeight * aspectRatio);
-    }
+//     if (finalWidth > maxSize.width()) {
+//         finalWidth = maxSize.width();
+//         finalHeight = static_cast<int>(finalWidth / aspectRatio);
+//     }
+//     if (finalHeight > maxSize.height()) {
+//         finalHeight = maxSize.height();
+//         finalWidth = static_cast<int>(finalHeight * aspectRatio);
+//     }
 
-    // 应用最终尺寸
-    resize(finalWidth, finalHeight);
+//     // 应用最终尺寸
+//     resize(finalWidth, finalHeight);
 
-    QWidget::resizeEvent(event);
-}
+//     QWidget::resizeEvent(event);
+// }
 
 TPCircuitDiagram1109::~TPCircuitDiagram1109()
 {
