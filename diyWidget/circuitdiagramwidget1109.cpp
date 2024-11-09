@@ -386,7 +386,7 @@ void CircuitDiagramWidget1109::drawWireToMainContactor(QPainter &painter, int ba
     int verticalLineLength = batteryHeight / 4;
 
     // 主接触器的位置 (相对电池)
-    int horizontalLineLength = 120; // 连接到主接触器的水平线长度
+    int horizontalLineLength = 120 * ratio; // 连接到主接触器的水平线长度
     int centerDistance = batteryWidth / 4; // 主接触器两个圆心之间的距离
 
     int mainContactorX = batteryPosX - horizontalLineLength - centerDistance; // 向左延伸以连接到右侧圆的圆弧
@@ -1936,7 +1936,7 @@ void CircuitDiagramWidget1109::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-
+    ratio = width() / 1280.0;
     offsetX = -747 * 1 / 10;
     // 绘制画布边框
     QPen borderPen(Qt::black); // 边框线条颜色
@@ -1946,22 +1946,22 @@ void CircuitDiagramWidget1109::paintEvent(QPaintEvent *event) {
 
     // 动态调整字体大小
     QFont font = painter.font();
-    font.setPointSize(747 / 60);
+    font.setPointSize(747 / 60 * ratio);
     font.setFamilies({"Arial", "Microsoft YaHei UI"});
     painter.setFont(font);
     /******************************************绘制第一个电池******************************************/
     isSec = false;
     // 计算电池的宽度和高度，使其充满画布并保持2:1的比例
-    int batteryWidth =747 * 0.2; // 占窗口宽度的20%
+    int batteryWidth =747 * 0.2 * ratio; // 占窗口宽度的20%
     int batteryHeight = batteryWidth / 2; // 保持2:1比例
     // 确保电池高度不会超过画布高度
-    if (batteryHeight >305 * 0.4) { // 高度占画布的40%
-        batteryHeight =305 * 0.4;
+    if (batteryHeight >305 * 0.4 * ratio) { // 高度占画布的40%
+        batteryHeight =305 * 0.4 * ratio;
         batteryWidth = batteryHeight * 2;
     }
     // 计算电池相对于画布的间距
-    int verticalMargin =305 / 4 + 5;
-    int horizontalMargin =747 / 9;
+    int verticalMargin =(305 / 4 + 5) * ratio;
+    int horizontalMargin =747 / 9 * ratio;
     // 电池主体
     QRect batteryRect(747 - batteryWidth - horizontalMargin + offsetX, verticalMargin, batteryWidth, batteryHeight);
     rect = batteryRect;
