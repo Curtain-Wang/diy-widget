@@ -204,6 +204,7 @@ private:
     //画图要用，判断是否是第二个电池
     bool isSec;
     QTimer* timer;
+    double ratio = 1.0;
 //能量块参数
 private:
     QList<qint32> fromPositive1;

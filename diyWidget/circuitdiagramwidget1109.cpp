@@ -386,7 +386,7 @@ void CircuitDiagramWidget1109::drawWireToMainContactor(QPainter &painter, int ba
     int verticalLineLength = batteryHeight / 4;
 
     // 主接触器的位置 (相对电池)
-    int horizontalLineLength = 120; // 连接到主接触器的水平线长度
+    int horizontalLineLength = 120 * ratio; // 连接到主接触器的水平线长度
     int centerDistance = batteryWidth / 4; // 主接触器两个圆心之间的距离
 
     int mainContactorX = batteryPosX - horizontalLineLength - centerDistance; // 向左延伸以连接到右侧圆的圆弧
@@ -405,6 +405,8 @@ void CircuitDiagramWidget1109::drawWireToMainContactor(QPainter &painter, int ba
     {
         //水平
         painter.drawLine(batteryPosX, batteryPosY - verticalLineLength, batteryPosX - horizontalLineLength, batteryPosY - verticalLineLength);
+
+
         //绘制能量块，如果有的话
         // for(int i = 0; i < energyPositionList.size(); i++)
         // {
@@ -611,7 +613,6 @@ void CircuitDiagramWidget1109::drawWireToSystemVoltage(QPainter &painter, int ma
     int endX = startX - horizontalLineLength;
 
     painter.drawLine(startX, startY, startX - horizontalLineLength, startY);
-
     //绘制能量块，如果有的话
     // for(int i = 0; i < energyPositionList.size(); i++)
     // {
@@ -647,9 +648,10 @@ void CircuitDiagramWidget1109::drawWireToSystemVoltage(QPainter &painter, int ma
     pen.setStyle(Qt::DashLine);
     painter.setPen(pen);
     painter.drawLine(endX + 5, startY, endX + 5, startY + verticalLineLength);
+
     pen.setStyle(Qt::SolidLine);
     // 绘制系统电压
-    drawSystemVoltage(painter, endX, startY + verticalLineLength);
+    drawSystemVoltage(painter, endX + 5, startY + verticalLineLength);
 
     //连向绘制加热故障开关的线
     drawWireToHeaterFaultContactor(painter, mainContactorX, mainContactorY, batteryWidth);
@@ -684,7 +686,6 @@ void CircuitDiagramWidget1109::drawWireToHeaterFaultContactor(QPainter &painter,
     int verticalLineLength =305 / 12 + 30;
     int verticalEndY = startY + verticalLineLength;
     painter.drawLine(startX, startY + 5, startX, verticalEndY);
-
 
     //绘制能量块，如果有的话
     // if(m_heaterContactorClosed && m_heaterFaultContactorClosed)
@@ -871,6 +872,7 @@ void CircuitDiagramWidget1109::drawWireToHeater(QPainter &painter, int heaterFau
     int length =747 / 30; // 加热器的水平位置可以调整
 
     painter.drawLine(startX, startY, startX, verticalEndY);
+
     painter.drawLine(startX, verticalEndY, startX + length - 2, verticalEndY);
 
     //绘制能量块，如果有的话
@@ -1088,6 +1090,7 @@ void CircuitDiagramWidget1109::drawWireToHeaterContactor(QPainter &painter, int 
 
     // 绘制垂直线
     painter.drawLine(startX, startY, startX, verticalEndY);
+
 
     // if(m_heaterContactorClosed && m_heaterFaultContactorClosed)
     // {
@@ -1342,8 +1345,6 @@ void CircuitDiagramWidget1109::drawWireToDischargeContactor(QPainter &painter, i
 
     painter.drawLine(startX, startY, startX + 80, startY);
 
-    qDebug() << "负电极高度: " << startY;
-
     // 绘制放电接触器
     drawDischargeContactor(painter, startX + 80, startY,747 / 5);
 }
@@ -1360,12 +1361,12 @@ void CircuitDiagramWidget1109::drawBottomWire(QPainter &painter, int startX, int
     int verticalEndY = startY +305 / 3 + 40;
 
     // 绘制从系统电压下方圆弧垂直向下的线
-    painter.drawLine(startX + 5, startY, startX + 5, verticalEndY);
+    painter.drawLine(startX, startY, startX, verticalEndY);
     // 绘制水平向右的线
     pen.setWidth(5);
     pen.setStyle(Qt::SolidLine);
     painter.setPen(pen);
-    painter.drawLine(startX, verticalEndY, 985 + 30, verticalEndY);
+    painter.drawLine(startX - 5, verticalEndY, 985 + 30, verticalEndY);
     //绘制垂直向上的线
     painter.drawLine(985 + 30, verticalEndY, 985 + 30, 38);
 
@@ -1473,8 +1474,10 @@ void CircuitDiagramWidget1109::drawWireToLimitedContactor(QPainter &painter, int
 
     // 绘制从中点到垂直向上的线
     painter.drawLine(midX, midY + 5, midX, verticalEndY);
+
     // 绘制水平向右的线，直到充电接触器的x坐标
     painter.drawLine(midX, verticalEndY, chargeContactorX, verticalEndY);
+
 
     // if(m_limitedContactorClosed && !m_chargeContactorClosed)
     // {
@@ -1578,6 +1581,7 @@ void CircuitDiagramWidget1109::drawLimitedContactor(QPainter &painter, int x, in
 
     //绘制开关之后水平向右的线,+-2是因为线太粗了
     painter.drawLine(startX + 2, y, startX +747 / 24 - 2, y);
+
     //绘制电阻之后的水平线，+2是线太粗了
     painter.drawLine(startX +747 / 8 + 2, y, startX +747 / 6, y);
 
@@ -1793,7 +1797,6 @@ void CircuitDiagramWidget1109::drawWireToChargeContactor(QPainter &painter, int 
     // 绘制水平线
     painter.drawLine(startX, startY, horizontalLineEndX, horizontalLineEndY);
 
-
     //绘制能量块，如果有的话
     int startLength =747 * 7 / 12 +305 * 3 / 4 + 20;
     // for(int i = 0; i < energyPositionList.size(); i++)
@@ -1924,7 +1927,6 @@ void CircuitDiagramWidget1109::drawWireFromNegativeElectrode(QPainter &painter, 
 
     // 绘制从电池负极向上垂直线
     painter.drawLine(batteryNegPosX, batteryNegPosY - 2, batteryNegPosX, batteryNegPosY - verticalLineLength);
-
     //绘制连向放电接触器的线
     drawWireToDischargeContactor(painter, batteryNegPosX, batteryNegPosY - verticalLineLength);
 }
@@ -1934,7 +1936,7 @@ void CircuitDiagramWidget1109::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-
+    ratio = width() / 1280.0;
     offsetX = -747 * 1 / 10;
     // 绘制画布边框
     QPen borderPen(Qt::black); // 边框线条颜色
@@ -1944,22 +1946,22 @@ void CircuitDiagramWidget1109::paintEvent(QPaintEvent *event) {
 
     // 动态调整字体大小
     QFont font = painter.font();
-    font.setPointSize(747 / 60);
+    font.setPointSize(747 / 60 * ratio);
     font.setFamilies({"Arial", "Microsoft YaHei UI"});
     painter.setFont(font);
     /******************************************绘制第一个电池******************************************/
     isSec = false;
     // 计算电池的宽度和高度，使其充满画布并保持2:1的比例
-    int batteryWidth =747 * 0.2; // 占窗口宽度的20%
+    int batteryWidth =747 * 0.2 * ratio; // 占窗口宽度的20%
     int batteryHeight = batteryWidth / 2; // 保持2:1比例
     // 确保电池高度不会超过画布高度
-    if (batteryHeight >305 * 0.4) { // 高度占画布的40%
-        batteryHeight =305 * 0.4;
+    if (batteryHeight >305 * 0.4 * ratio) { // 高度占画布的40%
+        batteryHeight =305 * 0.4 * ratio;
         batteryWidth = batteryHeight * 2;
     }
     // 计算电池相对于画布的间距
-    int verticalMargin =305 / 4 + 5;
-    int horizontalMargin =747 / 9;
+    int verticalMargin =(305 / 4 + 5) * ratio;
+    int horizontalMargin =747 / 9 * ratio;
     // 电池主体
     QRect batteryRect(747 - batteryWidth - horizontalMargin + offsetX, verticalMargin, batteryWidth, batteryHeight);
     rect = batteryRect;
