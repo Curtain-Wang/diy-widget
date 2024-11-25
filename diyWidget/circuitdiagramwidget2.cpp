@@ -263,6 +263,21 @@ void CircuitDiagramWidget2::setComponentState(const int state)
     }
 }
 
+int CircuitDiagramWidget2::showPack() const
+{
+    return m_showPack;
+}
+
+void CircuitDiagramWidget2::setShowPack(bool show)
+{
+    if(m_showPack != show)
+    {
+        m_showPack = show;
+        emit showPackChanged(m_showPack);
+        update();
+    }
+}
+
 void CircuitDiagramWidget2::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     QPen pen = painter.pen();
     pen.setBrush(QColor("#0000ff"));
@@ -2122,35 +2137,38 @@ void CircuitDiagramWidget2::paintEvent(QPaintEvent *event) {
     drawWireToMainContactor(painter, batteryRect.x(), batteryRect.y(), batteryRect.width(), batteryRect.height());
 
     // 绘制右侧的“串电压”和方框
-    painter.setPen(Qt::black);
-    int textX = batteryRect.right() + width() / 15 + width() / 20; // "串电压" 文字的X位置
-    int textY = batteryRect.top() - height() / 10; // "串电压" 文字的Y位置
-    font.setPointSize(width() / 50);
-    painter.setFont(font);
-    if(m_language == 2)
+    if(m_showPack)
     {
-        painter.drawText(textX, textY, tr("串电压"));
-    }else{
-        painter.drawText(textX, textY, tr("pack V."));
-    }
-
-    int rectWidth = width() / 15; // 方框的宽度
-    int rectHeight = height() / 10; // 方框的高度
-    int rectSpacing = height() / 40; // 方框之间的间距
-
-    QList<QColor> colors = {m_packColor1, m_packColor2, m_packColor3, m_packColor4, m_packColor5, m_packColor6};
-
-    for (int i = 1; i <= 6; ++i) {
         painter.setPen(Qt::black);
-        painter.setBrush(colors[i - 1]);
-        int rectX = textX + rectWidth / 5; // 方框的X位置
-        int rectY = textY + rectSpacing * 2 + (i - 1) * (rectHeight + rectSpacing); // 方框的Y位置
+        int textX = batteryRect.right() + width() / 15 + width() / 20; // "串电压" 文字的X位置
+        int textY = batteryRect.top() - height() / 10; // "串电压" 文字的Y位置
+        font.setPointSize(width() / 50);
+        painter.setFont(font);
+        if(m_language == 2)
+        {
+            painter.drawText(textX, textY, tr("串电压"));
+        }else{
+            painter.drawText(textX, textY, tr("pack V."));
+        }
 
-        // 绘制序号
-        painter.drawText(rectX - rectWidth / 2, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
+        int rectWidth = width() / 15; // 方框的宽度
+        int rectHeight = height() / 10; // 方框的高度
+        int rectSpacing = height() / 40; // 方框之间的间距
 
-        // 绘制方框
-        painter.drawRect(rectX, rectY, rectWidth, rectHeight);
+        QList<QColor> colors = {m_packColor1, m_packColor2, m_packColor3, m_packColor4, m_packColor5, m_packColor6};
+
+        for (int i = 1; i <= 6; ++i) {
+            painter.setPen(Qt::black);
+            painter.setBrush(colors[i - 1]);
+            int rectX = textX + rectWidth / 5; // 方框的X位置
+            int rectY = textY + rectSpacing * 2 + (i - 1) * (rectHeight + rectSpacing); // 方框的Y位置
+
+            // 绘制序号
+            painter.drawText(rectX - rectWidth / 2, rectY + rectHeight * 3 / 5, QString("%1)").arg(i));
+
+            // 绘制方框
+            painter.drawRect(rectX, rectY, rectWidth, rectHeight);
+        }
     }
 }
 

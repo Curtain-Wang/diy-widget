@@ -26,6 +26,7 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(QColor packColor6 READ packColor6 WRITE setPackColor6 NOTIFY packColor6Changed)
     Q_PROPERTY(int customLanguage READ customLanguage WRITE setCustomLanguage NOTIFY customLanguageChanged)
     Q_PROPERTY(int componentState READ componentState WRITE setComponentState NOTIFY componentStateChanged)
+    Q_PROPERTY(bool showPack READ showPack WRITE setShowPack NOTIFY showPackChanged)
 
 
 public:
@@ -86,6 +87,8 @@ public:
     int componentState() const;
     void setComponentState(int state);
 
+    int showPack() const;
+    void setShowPack(bool show);
 
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
@@ -137,6 +140,7 @@ signals:
     void packColor6Changed(const QColor &color);
     void customLanguageChanged(int language);
     void componentStateChanged(int state);
+    void showPackChanged(bool show);
 
 private slots:
     void on_timer_timeout();
@@ -165,6 +169,7 @@ private:
     int m_language;
     //0其他1充电2放电
     int m_state;
+    bool m_showPack;
 private:
     int chargeContactorEndx;
     int offsetX;
