@@ -141,7 +141,6 @@ signals:
     void customLanguageChanged(int language);
     void componentStateChanged(int state);
     void showPackChanged(bool show);
-
 private slots:
     void on_timer_timeout();
 protected:

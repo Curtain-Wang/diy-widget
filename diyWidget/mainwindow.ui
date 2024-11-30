@@ -14,13 +14,13 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="CircuitDiagramWidget1109" name="widget" native="true">
+   <widget class="CircuitDiagramWidget2" name="widget" native="true">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>100</y>
-      <width>1280</width>
-      <height>381</height>
+      <y>60</y>
+      <width>748</width>
+      <height>305</height>
      </rect>
     </property>
    </widget>
@@ -39,9 +39,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CircuitDiagramWidget1109</class>
+   <class>CircuitDiagramWidget2</class>
    <extends>QWidget</extends>
-   <header>circuitdiagramwidget1109.h</header>
+   <header>circuitdiagramwidget2.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

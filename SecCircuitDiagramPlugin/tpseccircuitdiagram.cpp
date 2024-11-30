@@ -625,7 +625,7 @@ void TPSecCircuitDiagram::drawMainContactor(QPainter &painter, int x, int y, int
     // 绘制开关线
     QLineF line;
     QPointF startPoint(x, y - radius); // 从圆弧位置开始
-    if (m_mainContactorClosed) // 假设有一个bool类型变量 mainContactorClosed 来表示接触器状态
+    if (m_mainContactorClosed || m_state == 1 || m_state == 2) // 假设有一个bool类型变量 mainContactorClosed 来表示接触器状态
     {
         // 闭合状态：水平线
         QPointF endPoint(x + centerDistance, y - radius);
@@ -1341,7 +1341,7 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                     //不充电的情况下，需要画最后的水平线
                     if(m_state != 1)
                     {
-                        drawGradientPolylineSegment(startX, startY + positionInLine, startX, startY + length + 1, startX - (positionInLine + ENERGY_BLOCK_WIDTH - length), startY + length + 1, Qt::black, painter);
+                        drawGradientPolylineSegment(startX, startY + positionInLine, startX, startY + length, startX - (positionInLine + ENERGY_BLOCK_WIDTH - length), startY + length, Qt::black, painter);
                     }
                 }
                 //能量完全在水平线中
@@ -1350,7 +1350,7 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                     if(m_state != 1)
                     {
                         int x = startX - (positionInLine - length);
-                        drawGradientLineSegment(x, startY + length + 1, x - ENERGY_BLOCK_WIDTH, startY + length + 1, Qt::black, painter);
+                        drawGradientLineSegment(x, startY + length, x - ENERGY_BLOCK_WIDTH, startY + length, Qt::black, painter);
                     }
                 }
             }
@@ -1493,7 +1493,7 @@ void TPSecCircuitDiagram::drawDischargeContactor(QPainter &painter, int x, int y
     // 绘制开关线
     QLineF line;
     QPointF startPoint(x, y - radius); // 从圆弧位置开始
-    if (m_dischargeContactorClosed) // 假设有一个bool类型变量 m_dischargeContactorClosed 来表示接触器状态
+    if (m_dischargeContactorClosed || m_state == 1 || m_state == 2) // 假设有一个bool类型变量 m_dischargeContactorClosed 来表示接触器状态
     {
         // 闭合状态：水平线
         QPointF endPoint(x + centerDistance, y - radius);
@@ -1931,7 +1931,7 @@ void TPSecCircuitDiagram::drawChargeContactor(QPainter &painter, int x, int y, i
     // 绘制开关线
     QLineF line;
     QPointF startPoint(x, y - radius); // 从圆弧位置开始
-    if (m_chargeContactorClosed) // 假设有一个bool类型变量 m_chargeContactorClosed 来表示接触器状态
+    if (m_chargeContactorClosed || m_state == 2) // 假设有一个bool类型变量 m_chargeContactorClosed 来表示接触器状态
     {
         // 闭合状态：水平线
         QPointF endPoint(x + centerDistance, y - radius);
@@ -2089,6 +2089,10 @@ void TPSecCircuitDiagram::paintEvent(QPaintEvent *event) {
     painter.setRenderHint(QPainter::Antialiasing);
 
     offsetX = -width() * 1 / 10;
+    if(!showPack())
+    {
+        offsetX += width() / 15 / 3 * 2;
+    }
     // 绘制画布边框
     QPen borderPen(Qt::black); // 边框线条颜色
     borderPen.setWidth(2);
