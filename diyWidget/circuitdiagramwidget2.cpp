@@ -7,24 +7,26 @@
 #include <QResizeEvent>
 #include <QTimer>
 CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
-    : QWidget(parent), m_chargeLevel(80), m_warningLevel(20)
+    : QWidget(parent), m_chargeLevel(50)
     , timer(new QTimer(this))
-    , m_mainContactorClosed(false)
-    , m_systemVoltage(134.44)
-    , m_dischargeContactorClosed(false)
-    , m_chargeContactorClosed(false)
+    , m_mainContactorClosed(true)
+    , m_systemVoltage(0)
+    , m_dischargeContactorClosed(true)
+    , m_chargeContactorClosed(true)
     , m_heaterFaultContactorClosed(true)
     , m_isHeating(true)
     , m_heaterContactorClosed(true)
-    , m_limitedContactorClosed(false),
+    , m_limitedContactorClosed(true),
     m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor2(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor4(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
-    m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
+    m_packColor6(QColor("#d4d4d9")),
+    m_levelColor(QColor("green")),
+    // 初始化为灰色
     m_language(2), //默认中文
-    m_state(0)
+    m_state(1)
 {
     energyColor = Qt::white;
     setMinimumSize(200, 140);
@@ -46,18 +48,6 @@ void CircuitDiagramWidget2::setChargeLevel(int level) {
     if (level != m_chargeLevel) {
         m_chargeLevel = level;
         emit chargeLevelChanged(level);
-        update();
-    }
-}
-
-int CircuitDiagramWidget2::warningLevel() const {
-    return m_warningLevel;
-}
-
-void CircuitDiagramWidget2::setWarningLevel(int level) {
-    if (level != m_warningLevel) {
-        m_warningLevel = level;
-        emit warningLevelChanged(level);
         update();
     }
 }
@@ -278,6 +268,21 @@ void CircuitDiagramWidget2::setShowPack(bool show)
     }
 }
 
+QColor CircuitDiagramWidget2::levelColor() const
+{
+    return m_levelColor;
+}
+
+void CircuitDiagramWidget2::setLevelColor(QColor color)
+{
+    if(m_levelColor != color)
+    {
+        m_levelColor = color;
+        emit levelColorChanged(m_levelColor);
+        update();
+    }
+}
+
 void CircuitDiagramWidget2::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     QPen pen = painter.pen();
     pen.setBrush(QColor("#CD9B1D"));
@@ -397,13 +402,9 @@ void CircuitDiagramWidget2::drawChargeLevel(QPainter &painter, const QRect &batt
     if(m_chargeLevel == 0){
         painter.setBrush(Qt::white);
         pen.setColor(Qt::white);
-    }
-    else if (m_chargeLevel < m_warningLevel) {
-        painter.setBrush(Qt::red);
-        pen.setColor(Qt::red);
-    } else {
-        painter.setBrush(Qt::green);
-        pen.setColor(Qt::green);
+    }else {
+        painter.setBrush(m_levelColor);
+        pen.setColor(m_levelColor);
     }
     painter.setPen(pen);
     painter.drawRect(chargeRect);

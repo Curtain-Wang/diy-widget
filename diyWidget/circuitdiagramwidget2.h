@@ -9,7 +9,6 @@ class CircuitDiagramWidget2 : public QWidget
     Q_OBJECT
 
     Q_PROPERTY(int chargeLevel READ chargeLevel WRITE setChargeLevel NOTIFY chargeLevelChanged)
-    Q_PROPERTY(int warningLevel READ warningLevel WRITE setWarningLevel NOTIFY warningLevelChanged)
     Q_PROPERTY(double systemVoltage READ systemVoltage WRITE setSystemVoltage NOTIFY systemVoltageChanged)
     Q_PROPERTY(bool mainContactorClosed READ mainContactorClosed WRITE setMainContactorClosed NOTIFY mainContactorClosedChanged)
     Q_PROPERTY(bool dischargeContactorClosed READ dischargeContactorClosed WRITE setDischargeContactorClosed NOTIFY dischargeContactorClosedChanged)
@@ -27,6 +26,7 @@ class CircuitDiagramWidget2 : public QWidget
     Q_PROPERTY(int customLanguage READ customLanguage WRITE setCustomLanguage NOTIFY customLanguageChanged)
     Q_PROPERTY(int componentState READ componentState WRITE setComponentState NOTIFY componentStateChanged)
     Q_PROPERTY(bool showPack READ showPack WRITE setShowPack NOTIFY showPackChanged)
+    Q_PROPERTY(QColor levelColor READ levelColor WRITE setLevelColor NOTIFY levelColorChanged)
 
 
 public:
@@ -35,9 +35,6 @@ public:
 
     int chargeLevel() const;
     void setChargeLevel(int level);
-
-    int warningLevel() const;
-    void setWarningLevel(int level);
 
     double systemVoltage() const;
     void setSystemVoltage(double voltage);
@@ -90,6 +87,9 @@ public:
     int showPack() const;
     void setShowPack(bool show);
 
+    QColor levelColor() const;
+    void setLevelColor(QColor color);
+
     void drawWireToMainContactor(QPainter &painter, int batteryX, int batteryY, int batteryWidth, int batteryHeight);
     void drawMainContactor(QPainter &painter, int x, int y, int batteryWidth);
     void drawWireToSystemVoltage(QPainter &painter, int mainContactorX, int mainContactorY, int batteryWidth);
@@ -123,7 +123,6 @@ public:
     void adjustEnergyPosition();
 signals:
     void chargeLevelChanged(int level);
-    void warningLevelChanged(int level);
     void systemVoltageChanged(int voltage);
     void mainContactorClosedChanged(bool closed);
     void dischargeContactorClosedChanged(bool closed);
@@ -141,6 +140,7 @@ signals:
     void customLanguageChanged(int language);
     void componentStateChanged(int state);
     void showPackChanged(bool show);
+    void levelColorChanged(QColor color);
 private slots:
     void on_timer_timeout();
 protected:
@@ -150,7 +150,6 @@ protected:
 
 private:
     int m_chargeLevel;
-    int m_warningLevel;
     double m_systemVoltage;
     bool m_mainContactorClosed;
     bool m_dischargeContactorClosed;
@@ -169,6 +168,7 @@ private:
     //0其他1充电2放电
     int m_state;
     bool m_showPack;
+    QColor m_levelColor;
 private:
     int chargeContactorEndx;
     int offsetX;

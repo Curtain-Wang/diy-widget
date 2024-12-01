@@ -7,7 +7,7 @@
 #include <QResizeEvent>
 #include <QTimer>
 TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
-    : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
+    : QWidget(parent), m_chargeLevel(0)
     , timer(new QTimer(this))
     , m_mainContactorClosed(true)
     , m_systemVoltage(0)
@@ -22,7 +22,9 @@ TPSecCircuitDiagram::TPSecCircuitDiagram(QWidget *parent)
     m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor4(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
-    m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
+    m_packColor6(QColor("#d4d4d9")),
+    m_levelColor(QColor("green")),
+    // 初始化为灰色
     m_language(2), //默认中文
     m_state(1)
 {
@@ -46,18 +48,6 @@ void TPSecCircuitDiagram::setChargeLevel(int level) {
     if (level != m_chargeLevel) {
         m_chargeLevel = level;
         emit chargeLevelChanged(level);
-        update();
-    }
-}
-
-int TPSecCircuitDiagram::warningLevel() const {
-    return m_warningLevel;
-}
-
-void TPSecCircuitDiagram::setWarningLevel(int level) {
-    if (level != m_warningLevel) {
-        m_warningLevel = level;
-        emit warningLevelChanged(level);
         update();
     }
 }
@@ -278,6 +268,21 @@ void TPSecCircuitDiagram::setShowPack(bool show)
     }
 }
 
+QColor TPSecCircuitDiagram::levelColor() const
+{
+    return m_levelColor;
+}
+
+void TPSecCircuitDiagram::setLevelColor(QColor color)
+{
+    if(m_levelColor != color)
+    {
+        m_levelColor = color;
+        emit levelColorChanged(m_levelColor);
+        update();
+    }
+}
+
 void TPSecCircuitDiagram::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     QPen pen = painter.pen();
     pen.setBrush(QColor("#CD9B1D"));
@@ -397,13 +402,9 @@ void TPSecCircuitDiagram::drawChargeLevel(QPainter &painter, const QRect &batter
     if(m_chargeLevel == 0){
         painter.setBrush(Qt::white);
         pen.setColor(Qt::white);
-    }
-    else if (m_chargeLevel < m_warningLevel) {
-        painter.setBrush(Qt::red);
-        pen.setColor(Qt::red);
-    } else {
-        painter.setBrush(Qt::green);
-        pen.setColor(Qt::green);
+    }else {
+        painter.setBrush(m_levelColor);
+        pen.setColor(m_levelColor);
     }
     painter.setPen(pen);
     painter.drawRect(chargeRect);
