@@ -7,16 +7,16 @@
 #include <QResizeEvent>
 #include <QTimer>
 CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
-    : QWidget(parent), m_chargeLevel(0), m_warningLevel(20)
+    : QWidget(parent), m_chargeLevel(80), m_warningLevel(20)
     , timer(new QTimer(this))
-    , m_mainContactorClosed(true)
-    , m_systemVoltage(0)
-    , m_dischargeContactorClosed(true)
-    , m_chargeContactorClosed(true)
+    , m_mainContactorClosed(false)
+    , m_systemVoltage(134.44)
+    , m_dischargeContactorClosed(false)
+    , m_chargeContactorClosed(false)
     , m_heaterFaultContactorClosed(true)
     , m_isHeating(true)
     , m_heaterContactorClosed(true)
-    , m_limitedContactorClosed(true),
+    , m_limitedContactorClosed(false),
     m_packColor1(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor2(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor3(QColor("#d4d4d9")),  // 初始化为灰色
@@ -24,7 +24,7 @@ CircuitDiagramWidget2::CircuitDiagramWidget2(QWidget *parent)
     m_packColor5(QColor("#d4d4d9")),  // 初始化为灰色
     m_packColor6(QColor("#d4d4d9")),   // 初始化为灰色
     m_language(2), //默认中文
-    m_state(1)
+    m_state(0)
 {
     energyColor = Qt::white;
     setMinimumSize(200, 140);
@@ -280,9 +280,9 @@ void CircuitDiagramWidget2::setShowPack(bool show)
 
 void CircuitDiagramWidget2::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     QPen pen = painter.pen();
-    pen.setBrush(QColor("#0000ff"));
+    pen.setBrush(QColor("#CD9B1D"));
     painter.setPen(pen);
-    painter.setBrush(QColor("#0000ff"));
+    painter.setBrush(QColor("#CD9B1D"));
     painter.drawRect(blueRect);
 
     // QLinearGradient gradient(batteryRect.topLeft(), batteryRect.bottomLeft());
@@ -362,9 +362,9 @@ void CircuitDiagramWidget2::drawTrapezoid(QPainter &painter, const QRect &blueRe
         QPointF(blueRect.left(), blueRect.top())
     };
     QPen pen = painter.pen();
-    pen.setBrush(QColor("#0000ff"));
+    pen.setBrush(QColor("#CD9B1D"));
     painter.setPen(pen);
-    painter.setBrush(QColor("#0000ff"));
+    painter.setBrush(QColor("#CD9B1D"));
     painter.drawPolygon(upperPoints, 4);
     pen.setBrush(Qt::black);
     painter.setPen(pen);
@@ -1272,8 +1272,8 @@ void CircuitDiagramWidget2::drawHeaterContactor(QPainter &painter, int x, int y)
     int startX = x;
     //+2是因为线太粗了
     int startY = y + centerDistance + 4 + 2;
-    //-4是因为线太粗了
-    int length = height() / 2 - 8 - width() * 3 / 20 - 4;
+    //-3是因为线太粗了
+    int length = height() / 2 - 8 - width() * 3 / 20 - 5;
     painter.drawLine(startX, startY, startX, startY + length - 4);
 
     if(m_heaterContactorClosed && m_heaterFaultContactorClosed)
@@ -1345,7 +1345,7 @@ void CircuitDiagramWidget2::drawHeaterContactor(QPainter &painter, int x, int y)
                     }
                 }
                 //能量完全在水平线中
-                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= 451)
+                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= 448)
                 {
                     if(m_state != 1)
                     {
@@ -1377,9 +1377,21 @@ void CircuitDiagramWidget2::drawSystemVoltage(QPainter &painter, int startX, int
 
     // 绘制系统电压值
     QString voltageText = QString("%1V").arg(m_systemVoltage);
+
+    // 设置字体
+    QFont textFont = painter.font();
+    textFont.setPointSize(textFont.pointSize() * 0.8);
+    painter.setFont(textFont);
+
+    // 设置文本颜色为蓝色
+    painter.setPen(QColor(0, 0, 255));  // RGB(0, 0, 255) 是蓝色
+
+    // 计算文本尺寸
     QFontMetrics metrics(painter.font());
     int textWidth = metrics.horizontalAdvance(voltageText);
     int textHeight = metrics.height();
+
+    // 绘制文本
     painter.drawText(centerX - textWidth / 2, centerY + textHeight / 4, voltageText);
 
     // 绘制从系统电压下方的导线

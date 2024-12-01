@@ -280,9 +280,9 @@ void TPSecCircuitDiagram::setShowPack(bool show)
 
 void TPSecCircuitDiagram::drawBatteryBody(QPainter &painter, const QRect &batteryRect, const QRect &blueRect) {
     QPen pen = painter.pen();
-    pen.setBrush(QColor("#0000ff"));
+    pen.setBrush(QColor("#CD9B1D"));
     painter.setPen(pen);
-    painter.setBrush(QColor("#0000ff"));
+    painter.setBrush(QColor("#CD9B1D"));
     painter.drawRect(blueRect);
 
     // QLinearGradient gradient(batteryRect.topLeft(), batteryRect.bottomLeft());
@@ -362,9 +362,9 @@ void TPSecCircuitDiagram::drawTrapezoid(QPainter &painter, const QRect &blueRect
         QPointF(blueRect.left(), blueRect.top())
     };
     QPen pen = painter.pen();
-    pen.setBrush(QColor("#0000ff"));
+    pen.setBrush(QColor("#CD9B1D"));
     painter.setPen(pen);
-    painter.setBrush(QColor("#0000ff"));
+    painter.setBrush(QColor("#CD9B1D"));
     painter.drawPolygon(upperPoints, 4);
     pen.setBrush(Qt::black);
     painter.setPen(pen);
@@ -1272,8 +1272,8 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
     int startX = x;
     //+2是因为线太粗了
     int startY = y + centerDistance + 4 + 2;
-    //-4是因为线太粗了
-    int length = height() / 2 - 8 - width() * 3 / 20 - 4;
+    //-3是因为线太粗了
+    int length = height() / 2 - 8 - width() * 3 / 20 - 5;
     painter.drawLine(startX, startY, startX, startY + length - 4);
 
     if(m_heaterContactorClosed && m_heaterFaultContactorClosed)
@@ -1345,7 +1345,7 @@ void TPSecCircuitDiagram::drawHeaterContactor(QPainter &painter, int x, int y)
                     }
                 }
                 //能量完全在水平线中
-                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= 451)
+                else if(chargeHeatPositionList[i] + ENERGY_BLOCK_WIDTH <= 448)
                 {
                     if(m_state != 1)
                     {
@@ -1377,9 +1377,21 @@ void TPSecCircuitDiagram::drawSystemVoltage(QPainter &painter, int startX, int s
 
     // 绘制系统电压值
     QString voltageText = QString("%1V").arg(m_systemVoltage);
+
+    // 设置字体
+    QFont textFont = painter.font();
+    textFont.setPointSize(textFont.pointSize() * 0.8);
+    painter.setFont(textFont);
+
+    // 设置文本颜色为蓝色
+    painter.setPen(QColor(0, 0, 255));  // RGB(0, 0, 255) 是蓝色
+
+    // 计算文本尺寸
     QFontMetrics metrics(painter.font());
     int textWidth = metrics.horizontalAdvance(voltageText);
     int textHeight = metrics.height();
+
+    // 绘制文本
     painter.drawText(centerX - textWidth / 2, centerY + textHeight / 4, voltageText);
 
     // 绘制从系统电压下方的导线
